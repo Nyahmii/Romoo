@@ -441,27 +441,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/ROMO/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/ROMO/discussions)
-- **Email**: your-email@example.com
-- **LLM Troubleshooting**: [docs/LLM_TROUBLESHOOTING.md](docs/LLM_TROUBLESHOOTING.md)
-
----
-
 ## 🦦 About Romo
 
 Romo is more than just an app - it's your friendly otter companion on your wellness journey. Whether you're tracking habits, setting goals, or discovering new recipes, Romo is here to support you with kindness and encouragement.
 
 **Remember**: Progress, not perfection. You're doing amazing! 💛
 
----
-
-<div align="center">
-
-**Made with 💛 by the ROMO community**
-
-[⭐ Star this repo](https://github.com/YOUR_USERNAME/ROMO) if you find it helpful!
-
-</div>
