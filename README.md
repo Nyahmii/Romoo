@@ -446,6 +446,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/ROMO/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/ROMO/discussions)
 - **Email**: your-email@example.com
+- **LLM Troubleshooting**: [docs/LLM_TROUBLESHOOTING.md](docs/LLM_TROUBLESHOOTING.md)
 
 ---
 
