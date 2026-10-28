@@ -290,22 +290,34 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
               </div>
 
               {profile.llmProvider === 'ollama' && (
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Ollama URL</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={ollamaUrl}
-                      onChange={(e) => setOllamaUrl(e.target.value)}
-                      placeholder="http://localhost:11434"
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-purple-300"
-                    />
-                    <button
-                      onClick={handleSaveOllamaUrl}
-                      className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition"
-                    >
-                      Save
-                    </button>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Ollama URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={ollamaUrl}
+                        onChange={(e) => setOllamaUrl(e.target.value)}
+                        placeholder="http://localhost:11434"
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-purple-300"
+                      />
+                      <button
+                        onClick={handleSaveOllamaUrl}
+                        className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                    <p className="font-medium mb-2">📋 Ollama Setup Instructions:</p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Install Ollama from <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="underline">ollama.ai</a></li>
+                      <li>Pull a model: <code className="bg-blue-100 px-1 rounded">ollama pull llama3.2</code></li>
+                      <li>Start with CORS enabled: <code className="bg-blue-100 px-1 rounded">OLLAMA_ORIGINS="*" ollama serve</code></li>
+                      <li>Or set environment variable permanently</li>
+                    </ol>
                   </div>
                 </div>
               )}

@@ -439,7 +439,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **AI Models**: [MLC AI](https://github.com/mlc-ai/mlc-llm) and [Ollama](https://ollama.ai)
 - **Framework**: [React](https://react.dev/) and [Vite](https://vitejs.dev/)
 
-
 ---
 
 ## 🦦 About Romo

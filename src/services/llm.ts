@@ -15,28 +15,54 @@ export interface LLMService {
 class WebLLMService implements LLMService {
   private engine: any = null;
   private initialized = false;
+  private initializing = false;
+  private initError: string | null = null;
 
-  async initialize() {
+  async initialize(): Promise<void> {
     if (this.initialized) return;
+    if (this.initializing) {
+      // Wait for ongoing initialization
+      while (this.initializing) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+    
+    this.initializing = true;
     
     try {
+      // Check WebGPU support
+      if (!(navigator as any).gpu) {
+        throw new Error('WebGPU is not supported on this device. Please use Chrome 113+ on a compatible device, or switch to Ollama.');
+      }
+
       // @ts-ignore - WebLLM types
-      const { CreateMLCEngine } = await import('@mlc-ai/web-llm');
+      const { CreateMLCEngine, prebuiltAppConfig } = await import('@mlc-ai/web-llm');
       
-      // Use a small model suitable for mobile devices
+      // Use a smaller, more compatible model
+      // Phi-2 is smaller and works better on mobile
+      const modelId = "Phi-2-q4f16_1-MLC";
+      
+      console.log('🦦 Initializing WebLLM with model:', modelId);
+      
       this.engine = await CreateMLCEngine(
-        "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC",
+        modelId,
         {
           initProgressCallback: (progress: any) => {
-            console.log('LLM Loading:', progress.text);
+            console.log('🦦 LLM Loading:', progress.text, `${(progress.progress * 100).toFixed(1)}%`);
           }
         }
       );
       
       this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize WebLLM:', error);
-      throw new Error('Failed to initialize local LLM. Your device may not support WebGPU.');
+      this.initError = null;
+      console.log('✅ WebLLM initialized successfully');
+    } catch (error: any) {
+      console.error('❌ Failed to initialize WebLLM:', error);
+      this.initError = error.message || 'Unknown error';
+      throw new Error(`WebLLM initialization failed: ${this.initError}`);
+    } finally {
+      this.initializing = false;
     }
   }
 
@@ -108,13 +134,65 @@ class WebLLMService implements LLMService {
 // Ollama implementation (local server)
 class OllamaService implements LLMService {
   private baseUrl: string;
+  private tested = false;
+  private connectionError: string | null = null;
 
   constructor(baseUrl: string = 'http://localhost:11434') {
     this.baseUrl = baseUrl;
   }
 
-  async generateCompletion(messages: LLMMessage[]): Promise<string> {
+  async testConnection(): Promise<boolean> {
+    if (this.tested) {
+      return this.connectionError === null;
+    }
+
     try {
+      console.log('🦦 Testing Ollama connection at:', this.baseUrl);
+      
+      // Test with a simple tags request
+      const response = await fetch(`${this.baseUrl}/api/tags`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Ollama connection successful. Available models:', data.models?.map((m: any) => m.name).join(', ') || 'none');
+      
+      this.tested = true;
+      this.connectionError = null;
+      return true;
+    } catch (error: any) {
+      console.error('❌ Ollama connection failed:', error);
+      
+      let errorMessage = 'Failed to connect to Ollama';
+      
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = `Cannot reach Ollama at ${this.baseUrl}. Make sure Ollama is running and CORS is enabled.`;
+      } else if (error.message.includes('CORS')) {
+        errorMessage = `CORS error: Ollama needs to be started with OLLAMA_ORIGINS="*" environment variable.`;
+      } else {
+        errorMessage = `${errorMessage}: ${error.message}`;
+      }
+      
+      this.tested = true;
+      this.connectionError = errorMessage;
+      throw new Error(errorMessage);
+    }
+  }
+
+  async generateCompletion(messages: LLMMessage[]): Promise<string> {
+    // Test connection first
+    await this.testConnection();
+
+    try {
+      console.log('🦦 Sending request to Ollama...');
+      
       const response = await fetch(`${this.baseUrl}/api/chat`, {
         method: 'POST',
         headers: {
@@ -128,14 +206,27 @@ class OllamaService implements LLMService {
       });
 
       if (!response.ok) {
-        throw new Error('Ollama request failed');
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
-      return data.message?.content || '';
-    } catch (error) {
-      console.error('Ollama error:', error);
-      throw new Error('Failed to connect to Ollama. Make sure it\'s running at ' + this.baseUrl);
+      const content = data.message?.content || '';
+      
+      if (!content) {
+        throw new Error('Empty response from Ollama');
+      }
+      
+      console.log('✅ Ollama response received');
+      return content;
+    } catch (error: any) {
+      console.error('❌ Ollama generation error:', error);
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+        throw new Error(`Connection error: Make sure Ollama is running at ${this.baseUrl} with CORS enabled (OLLAMA_ORIGINS="*")`);
+      }
+      
+      throw new Error(`Ollama error: ${error.message}`);
     }
   }
 
@@ -200,6 +291,43 @@ export function createLLMService(profile: UserProfile): LLMService | null {
   }
 
   return null;
+}
+
+// Test Ollama connection
+export async function testOllamaConnection(url: string = 'http://localhost:11434'): Promise<{ success: boolean; message: string; models?: string[] }> {
+  try {
+    const response = await fetch(`${url}/api/tags`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { success: false, message: `HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+    const models = data.models?.map((m: any) => m.name) || [];
+    
+    return { 
+      success: true, 
+      message: `Connected successfully. ${models.length} model(s) available.`,
+      models
+    };
+  } catch (error: any) {
+    let message = 'Connection failed';
+    
+    if (error.message.includes('Failed to fetch')) {
+      message = `Cannot reach Ollama at ${url}. Is Ollama running?`;
+    } else if (error.message.includes('CORS')) {
+      message = 'CORS error: Start Ollama with OLLAMA_ORIGINS="*" environment variable';
+    } else {
+      message = error.message;
+    }
+    
+    return { success: false, message };
+  }
 }
 
 // Web search service for recipes

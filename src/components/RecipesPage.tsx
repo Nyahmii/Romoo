@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { recipes } from '../data/recipes';
 import { Recipe, UserProfile } from '../types';
-import { ChefHat, Clock, Users, Search, X, Sparkles, Globe, Loader2 } from 'lucide-react';
-import { createLLMService, searchWebRecipes } from '../services/llm';
+import { ChefHat, Clock, Users, Search, X, Sparkles, Globe, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { createLLMService, searchWebRecipes, testOllamaConnection } from '../services/llm';
 
 interface RecipesPageProps {
   profile: UserProfile;
@@ -21,23 +21,63 @@ export default function RecipesPage({ profile }: RecipesPageProps) {
   const [llmPrompt, setLlmPrompt] = useState('');
   const [llmLoading, setLlmLoading] = useState(false);
   const [llmResult, setLlmResult] = useState<string>('');
+  const [llmStatus, setLlmStatus] = useState<string>('');
   const [showWebSearch, setShowWebSearch] = useState(false);
   const [webQuery, setWebQuery] = useState('');
   const [webResults, setWebResults] = useState<any[]>([]);
   const [webLoading, setWebLoading] = useState(false);
+  const [ollamaTestResult, setOllamaTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testingOllama, setTestingOllama] = useState(false);
 
-  const llmService = createLLMService(profile);
+  // Memoize LLM service to avoid recreating on every render
+  const llmService = useMemo(() => createLLMService(profile), [profile.llmEnabled, profile.llmProvider, profile.ollamaUrl]);
 
   const handleLLMGenerate = async () => {
     if (!llmService || !llmPrompt.trim()) return;
+    
     setLlmLoading(true);
+    setLlmResult('');
+    setLlmStatus('Initializing AI model... This may take a moment on first use.');
+    
     try {
+      setLlmStatus('Generating recipe...');
       const result = await llmService.generateRecipe(llmPrompt);
-      setLlmResult(result);
+      
+      if (!result || result.trim() === '') {
+        setLlmResult('⚠️ The AI returned an empty response. Please try again or rephrase your prompt.');
+      } else {
+        setLlmResult(result);
+        setLlmStatus('✅ Recipe generated successfully!');
+      }
     } catch (error: any) {
-      setLlmResult('Error: ' + error.message);
+      console.error('LLM generation error:', error);
+      
+      let errorMessage = '❌ Failed to generate recipe. ';
+      
+      if (error.message.includes('WebGPU')) {
+        errorMessage += 'Your device does not support WebGPU. Try using Ollama instead, or use a newer device/browser.';
+      } else if (error.message.includes('Ollama')) {
+        errorMessage += error.message;
+      } else if (error.message.includes('CORS')) {
+        errorMessage += 'CORS error detected. If using Ollama, start it with: OLLAMA_ORIGINS="*" ollama serve';
+      } else {
+        errorMessage += error.message || 'Unknown error occurred.';
+      }
+      
+      setLlmResult(errorMessage);
+      setLlmStatus('');
+    } finally {
+      setLlmLoading(false);
     }
-    setLlmLoading(false);
+  };
+
+  const handleTestOllama = async () => {
+    setTestingOllama(true);
+    setOllamaTestResult(null);
+    
+    const result = await testOllamaConnection(profile.ollamaUrl || 'http://localhost:11434');
+    setOllamaTestResult(result);
+    setTestingOllama(false);
   };
 
   const handleWebSearch = async () => {
@@ -166,6 +206,34 @@ export default function RecipesPage({ profile }: RecipesPageProps) {
 
           {showLLM && (
             <div className="space-y-3">
+              {/* Provider Info */}
+              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
+                <p className="font-medium mb-1">
+                  {profile.llmProvider === 'web-llm' ? '🌐 WebLLM (Browser-based)' : '🖥️ Ollama (Local Server)'}
+                </p>
+                {profile.llmProvider === 'web-llm' && (
+                  <p>Model downloads on first use (~700MB). Requires WebGPU support (Chrome 113+).</p>
+                )}
+                {profile.llmProvider === 'ollama' && (
+                  <div>
+                    <p>URL: {profile.ollamaUrl || 'http://localhost:11434'}</p>
+                    <button
+                      onClick={handleTestOllama}
+                      disabled={testingOllama}
+                      className="mt-2 text-purple-600 hover:text-purple-700 underline disabled:opacity-50"
+                    >
+                      {testingOllama ? 'Testing...' : 'Test Connection'}
+                    </button>
+                    {ollamaTestResult && (
+                      <div className={`mt-2 flex items-start gap-2 ${ollamaTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                        {ollamaTestResult.success ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+                        <span>{ollamaTestResult.message}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <textarea
                 value={llmPrompt}
                 onChange={(e) => setLlmPrompt(e.target.value)}
@@ -173,6 +241,7 @@ export default function RecipesPage({ profile }: RecipesPageProps) {
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-purple-300 resize-none"
                 rows={3}
               />
+              
               <button
                 onClick={handleLLMGenerate}
                 disabled={llmLoading || !llmPrompt.trim()}
@@ -191,9 +260,24 @@ export default function RecipesPage({ profile }: RecipesPageProps) {
                 )}
               </button>
 
+              {/* Status Message */}
+              {llmStatus && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    {llmLoading && <Loader2 size={14} className="animate-spin" />}
+                    {llmStatus}
+                  </p>
+                </div>
+              )}
+
+              {/* Result */}
               {llmResult && (
-                <div className="bg-purple-50 rounded-lg p-4 mt-3">
-                  <p className="text-sm text-purple-900 whitespace-pre-wrap">{llmResult}</p>
+                <div className={`rounded-lg p-4 mt-3 ${
+                  llmResult.startsWith('❌') || llmResult.startsWith('⚠️')
+                    ? 'bg-red-50 border border-red-200'
+                    : 'bg-purple-50 border border-purple-200'
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{llmResult}</p>
                 </div>
               )}
             </div>
