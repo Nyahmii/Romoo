@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Page } from '../types';
-import { Home, Target, ChefHat, Clock, Settings } from 'lucide-react';
+import { Home, Target, ChefHat, Clock, Settings, BarChart3 } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,6 +13,7 @@ const navItems: { page: Page; label: string; icon: typeof Home }[] = [
   { page: 'dashboard', label: 'Home', icon: Home },
   { page: 'goals', label: 'Goals', icon: Target },
   { page: 'recipes', label: 'Recipes', icon: ChefHat },
+  { page: 'statistics', label: 'Stats', icon: BarChart3 },
   { page: 'history', label: 'History', icon: Clock },
   { page: 'settings', label: 'Settings', icon: Settings },
 ];

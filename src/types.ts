@@ -77,6 +77,19 @@ export interface UserProfile {
   name: string;
   hasCompletedOnboarding: boolean;
   theme: 'light' | 'dark';
+  pin?: string;
+  llmEnabled?: boolean;
+  llmProvider?: 'web-llm' | 'ollama' | 'none';
+  ollamaUrl?: string;
+  webSearchEnabled?: boolean;
 }
 
-export type Page = 'dashboard' | 'goals' | 'recipes' | 'history' | 'settings';
+export interface WeeklyGoal {
+  id: string;
+  category: 'checkins' | 'sleep' | 'movement' | 'goals';
+  target: number;
+  actual: number;
+  weekStart: string;
+}
+
+export type Page = 'dashboard' | 'goals' | 'recipes' | 'history' | 'settings' | 'statistics';

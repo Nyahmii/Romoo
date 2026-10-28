@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { recipes } from '../data/recipes';
-import { Recipe } from '../types';
-import { ChefHat, Clock, Users, Search, X } from 'lucide-react';
+import { Recipe, UserProfile } from '../types';
+import { ChefHat, Clock, Users, Search, X, Sparkles, Globe, Loader2 } from 'lucide-react';
+import { createLLMService, searchWebRecipes } from '../services/llm';
 
-export default function RecipesPage() {
+interface RecipesPageProps {
+  profile: UserProfile;
+}
+
+export default function RecipesPage({ profile }: RecipesPageProps) {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -12,6 +17,36 @@ export default function RecipesPage() {
       return JSON.parse(localStorage.getItem('romo-recipe-favorites') || '[]');
     } catch { return []; }
   });
+  const [showLLM, setShowLLM] = useState(false);
+  const [llmPrompt, setLlmPrompt] = useState('');
+  const [llmLoading, setLlmLoading] = useState(false);
+  const [llmResult, setLlmResult] = useState<string>('');
+  const [showWebSearch, setShowWebSearch] = useState(false);
+  const [webQuery, setWebQuery] = useState('');
+  const [webResults, setWebResults] = useState<any[]>([]);
+  const [webLoading, setWebLoading] = useState(false);
+
+  const llmService = createLLMService(profile);
+
+  const handleLLMGenerate = async () => {
+    if (!llmService || !llmPrompt.trim()) return;
+    setLlmLoading(true);
+    try {
+      const result = await llmService.generateRecipe(llmPrompt);
+      setLlmResult(result);
+    } catch (error: any) {
+      setLlmResult('Error: ' + error.message);
+    }
+    setLlmLoading(false);
+  };
+
+  const handleWebSearch = async () => {
+    if (!webQuery.trim()) return;
+    setWebLoading(true);
+    const results = await searchWebRecipes(webQuery);
+    setWebResults(results);
+    setWebLoading(false);
+  };
 
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
 
@@ -110,6 +145,120 @@ export default function RecipesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* AI Recipe Generator */}
+      {profile.llmEnabled && llmService && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Sparkles size={18} className="text-purple-500" />
+              AI Recipe Generator
+            </h2>
+            <button
+              onClick={() => setShowLLM(!showLLM)}
+              className="text-sm bg-purple-50 text-purple-600 px-3 py-1 rounded-lg hover:bg-purple-100 transition"
+            >
+              {showLLM ? 'Close' : 'Generate'}
+            </button>
+          </div>
+
+          {showLLM && (
+            <div className="space-y-3">
+              <textarea
+                value={llmPrompt}
+                onChange={(e) => setLlmPrompt(e.target.value)}
+                placeholder="Describe what you want... e.g., 'A healthy vegetarian dinner with spinach and quinoa'"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-purple-300 resize-none"
+                rows={3}
+              />
+              <button
+                onClick={handleLLMGenerate}
+                disabled={llmLoading || !llmPrompt.trim()}
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-2.5 rounded-xl font-medium hover:from-purple-600 hover:to-indigo-600 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {llmLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    Generate Recipe
+                  </>
+                )}
+              </button>
+
+              {llmResult && (
+                <div className="bg-purple-50 rounded-lg p-4 mt-3">
+                  <p className="text-sm text-purple-900 whitespace-pre-wrap">{llmResult}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Web Recipe Search */}
+      {profile.webSearchEnabled && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-blue-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Globe size={18} className="text-blue-500" />
+              Web Recipe Search
+            </h2>
+            <button
+              onClick={() => setShowWebSearch(!showWebSearch)}
+              className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-100 transition"
+            >
+              {showWebSearch ? 'Close' : 'Search'}
+            </button>
+          </div>
+
+          {showWebSearch && (
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={webQuery}
+                  onChange={(e) => setWebQuery(e.target.value)}
+                  placeholder="Search for recipes online..."
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-300"
+                  onKeyDown={(e) => e.key === 'Enter' && handleWebSearch()}
+                />
+                <button
+                  onClick={handleWebSearch}
+                  disabled={webLoading || !webQuery.trim()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition disabled:opacity-50"
+                >
+                  {webLoading ? '...' : 'Search'}
+                </button>
+              </div>
+
+              {webResults.length > 0 && (
+                <div className="space-y-2 mt-3">
+                  {webResults.map((result, i) => (
+                    <a
+                      key={i}
+                      href={result.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+                    >
+                      <p className="text-sm font-medium text-blue-900">{result.title}</p>
+                      <p className="text-xs text-blue-600 mt-1 line-clamp-2">{result.snippet}</p>
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {webResults.length === 0 && !webLoading && webQuery && (
+                <p className="text-sm text-gray-400 text-center py-4">No results found. Try a different search.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
