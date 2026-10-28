@@ -1,0 +1,106 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web app
+      run: npm run build
+
+    - name: Add Android platform
+      run: npx cap add android
+
+    - name: Sync web assets
+      run: npx cap sync android
+
+    - name: Make gradlew executable
+      run: chmod +x android/gradlew
+
+    - name: Build Debug APK
+      run: |
+        cd android
+        ./gradlew assembleDebug
+
+    - name: Get APK info
+      id: apk_info
+      run: |
+        APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+        APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+        echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+        echo "apk_size=$APK_SIZE" >> $GITHUB_OUTPUT
+        echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ROMO-APK
+        path: ${{ steps.apk_info.outputs.apk_path }}
+        retention-days: 30
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ steps.apk_info.outputs.apk_path }}
+        name: ROMO ${{ steps.apk_info.outputs.version }}
+        body: |
+          ## 🦦 ROMO ${{ steps.apk_info.outputs.version }}
+          
+          ### What's New
+          - AI-powered recipe generation (Local LLM)
+          - Comprehensive statistics with visual charts
+          - PIN protection for security
+          - Web recipe search integration
+          - Improved mobile experience
+          
+          ### Installation
+          1. Download the APK file below
+          2. Transfer to your Android device
+          3. Open the APK file to install
+          4. Enable "Install from unknown sources" if prompted
+          
+          ### APK Info
+          - **Size**: ${{ steps.apk_info.outputs.apk_size }}
+          - **Type**: Debug build (unsigned)
+          - **Min Android**: 5.0 (API 21)
+          - **Target Android**: 14 (API 34)
+          
+          ### Features
+          - ✅ Daily check-ins & mood tracking
+          - ✅ Sleep & movement tracking
+          - ✅ Goals & habits management
+          - ✅ Recipe library with AI generation
+          - ✅ Statistics & analytics
+          - ✅ 100% local - no accounts needed
+          - ✅ Optional PIN protection
+          
+          **Note**: This is a debug build. For production use, build a signed release APK.
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
