@@ -439,13 +439,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **AI Models**: [MLC AI](https://github.com/mlc-ai/mlc-llm) and [Ollama](https://ollama.ai)
 - **Framework**: [React](https://react.dev/) and [Vite](https://vitejs.dev/)
 
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/ROMO/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/ROMO/discussions)
-- **Email**: your-email@example.com
 
 ---
 
@@ -455,12 +448,3 @@ Romo is more than just an app - it's your friendly otter companion on your welln
 
 **Remember**: Progress, not perfection. You're doing amazing! 💛
 
----
-
-<div align="center">
-
-**Made with 💛 by the ROMO community**
-
-[⭐ Star this repo](https://github.com/YOUR_USERNAME/ROMO) if you find it helpful!
-
-</div>
