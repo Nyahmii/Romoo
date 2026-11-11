@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ChefHat, Trash2, ChevronDown, ChevronUp, Plus, Check, Download, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChefHat, Trash2, ChevronDown, ChevronUp, Plus, Check, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
 
 interface BoxRecipe {
@@ -19,6 +19,7 @@ const EGG = ['egg', 'mayonnaise', 'mayo', 'aioli'];
 const NUT = ['nut', 'peanut', 'almond', 'cashew', 'walnut', 'pistachio', 'hazelnut', 'pecan', 'tahini', 'sesame', 'marzipan'];
 const GLUTEN = ['wheat', 'flour', 'pasta', 'spaghetti', 'noodle', 'bread', 'breadcrumb', 'barley', 'rye', 'semolina', 'couscous', 'bulgur', 'seitan', 'soy sauce', 'soysauce', 'malt', 'beer', 'cracker', 'pastry', 'dough'];
 const HONEY = ['honey'];
+const DIET_WORD: Record<Diet, string> = { all: '', vegan: 'vegan', vegetarian: 'vegetarian', glutenfree: 'gluten-free', dairyfree: 'dairy-free', nutfree: 'nut-free', eggfree: 'egg-free' };
 const low = (s: string) => s.toLowerCase();
 const hasAny = (ings: string[], words: string[]) => ings.some(i => { const s = low(i); return words.some(w => s.includes(w)); });
 const isVegan = (ings: string[]) => ings.length > 0 && !hasAny(ings, MEAT.concat(DAIRY, EGG, HONEY));
@@ -28,67 +29,51 @@ const isDairyFree = (ings: string[]) => ings.length > 0 && !hasAny(ings, DAIRY);
 const isNutFree = (ings: string[]) => ings.length > 0 && !hasAny(ings, NUT);
 const isEggFree = (ings: string[]) => ings.length > 0 && !hasAny(ings, EGG);
 
+const dec = (s: string): string => { try { const t = document.createElement('textarea'); t.innerHTML = s; return t.value; } catch { return s; } };
+const cleanLine = (s: string) => dec(s).replace(/^[\s\u2022\u25a2\u25aa\u25ab\u2023\u2043▪▢•·]+/, '').trim();
+const txt = (h: string) => cleanLine(h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '));
 const loadBox = (): BoxRecipe[] => { try { return JSON.parse(localStorage.getItem('romo-recipe-box') || '[]'); } catch { return []; } };
-const ingOfMeal = (m: any): string[] => { const out: string[] = []; for (let i = 1; i <= 20; i++) { const ing = m['strIngredient' + i]; const meas = m['strMeasure' + i]; if (ing && ing.trim()) out.push((meas && meas.trim() ? meas.trim() + ' ' : '') + ing.trim()); } return out; };
+const ingOfMeal = (m: any): string[] => { const out: string[] = []; for (let i = 1; i <= 20; i++) { const ing = m['strIngredient' + i]; const meas = m['strMeasure' + i]; if (ing && ing.trim()) out.push(cleanLine((meas ? meas.trim() + ' ' : '') + ing.trim())); } return out; };
 
-function parseHTMLRecipe(html: string): { ingredients: string[]; instructions: string[]; image: string } {
-  const txt = (h: string) => h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#160;|&nbsp;/g, ' ').trim();
-  
-  // Try to find ingredients section
-  let ingredients: string[] = [];
-  const ingPatterns = [
-    /<h[23][^>]*>\s*(?:<span[^>]*>)?ingredients(?:<\/span>)?\s*<\/h[23]>\s*<ul[^>]*>([\s\S]*?)<\/ul>/i,
-    /<h[23][^>]*>\s*(?:<span[^>]*>)?ingredients(?:<\/span>)?\s*<\/h[23]>\s*([\s\S]*?)(?=<h[23]|$)/i,
-    /ingredients[\s\S]*?<ul[^>]*>([\s\S]*?)<\/ul>/i,
-  ];
-  
-  for (const pattern of ingPatterns) {
-    const match = html.match(pattern);
-    if (match) {
-      const lis = [...match[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map(x => txt(x[1])).filter(Boolean);
-      if (lis.length > 2) { ingredients = lis; break; }
-    }
-  }
-  
-  // Try to find instructions section
-  let instructions: string[] = [];
-  const instrPatterns = [
-    /<h[23][^>]*>\s*(?:<span[^>]*>)?(?:procedure|instructions|method|directions|preparation|steps)(?:<\/span>)?\s*<\/h[23]>\s*<ol[^>]*>([\s\S]*?)<\/ol>/i,
-    /<h[23][^>]*>\s*(?:<span[^>]*>)?(?:procedure|instructions|method|directions|preparation|steps)(?:<\/span>)?\s*<\/h[23]>\s*([\s\S]*?)(?=<h[23]|$)/i,
-  ];
-  
-  for (const pattern of instrPatterns) {
-    const match = html.match(pattern);
-    if (match) {
-      const lis = [...match[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map(x => txt(x[1])).filter(Boolean);
-      if (lis.length > 1) { instructions = lis; break; }
-      // If no <ol>, try to split by paragraphs
-      if (!instructions.length) {
-        const paras = match[1].split(/<\/?p>/).map(p => txt(p)).filter(p => p.length > 10);
-        if (paras.length > 1) instructions = paras;
-      }
-    }
-  }
-  
-  // Extract image
-  const imgMatch = html.match(/<img[^>]+src="(\/\/upload\.wikimedia\.org[^"]+|https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
-  const image = imgMatch ? (imgMatch[1].startsWith('//') ? 'https:' + imgMatch[1] : imgMatch[1]) : '';
-  
-  return { ingredients, instructions, image };
+function ogImage(html: string): string {
+  const m = html.match(/<meta[^>]+property=["']og:image[:\w]*["'][^>]+content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image[:\w]*["']/i)
+    || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+  return m ? m[1] : '';
 }
-
+function section(html: string, names: string[]): string[] {
+  for (const n of names) {
+    const re = new RegExp('<h[23][^>]*>\\s*(?:<span[^>]*>)?' + n + '(?:</span>)?\\s*</h[23]>([\\s\\S]*?)(?=<h[23]|$)', 'i');
+    const m = html.match(re);
+    if (m) {
+      const lis = [...m[0].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map(x => txt(x[1])).filter(Boolean);
+      if (lis.length) return lis;
+      const paras = m[1].split(/<\/?p[^>]*>/).map(p => txt(p)).filter(p => p.length > 10);
+      if (paras.length > 1) return paras;
+    }
+  }
+  return [];
+}
+function parseHTMLRecipe(html: string): { ingredients: string[]; instructions: string[]; image: string } {
+  let image = ogImage(html);
+  if (!image) { const im = html.match(/<img[^>]+(?:src|data-src)=["'](https?:\/\/[^"']+)["']/i); image = im ? im[1] : ''; }
+  return {
+    ingredients: section(html, ['Ingredients']),
+    instructions: section(html, ['Procedure', 'Instructions', 'Method', 'Directions', 'Preparation', 'Steps']),
+    image,
+  };
+}
 async function fetchWBDetails(title: string): Promise<{ ingredients: string[]; instructions: string[]; image: string }> {
   const r = await fetch(WB + 'action=parse&page=' + encodeURIComponent(title) + '&prop=text&format=json&origin=*');
   const j = await r.json();
   const html: string = (j.parse && j.parse.text && (j.parse.text['*'] || '')) || '';
   return parseHTMLRecipe(html);
 }
-
 async function fetchWB(q: string): Promise<UniMeal[]> {
   try {
     const r = await fetch(WB + 'action=query&list=search&srsearch=' + encodeURIComponent(q) + '&srnamespace=102&srlimit=15&format=json&origin=*');
     const j = await r.json();
-    return ((j.query && j.query.search) || []).map((s: any) => ({ src: 'wb' as const, id: s.title, name: s.title.replace(/^Cookbook:/, '').replace(/_/g, ' '), image: '', ingredients: [], instructions: [], category: '', area: 'Wikibooks', tags: [] }));
+    return ((j.query && j.query.search) || []).map((s: any) => ({ src: 'wb' as const, id: s.title, name: dec(s.title.replace(/^Cookbook:/, '').replace(/_/g, ' ')), image: '', ingredients: [], instructions: [], category: '', area: 'Wikibooks', tags: [] }));
   } catch { return []; }
 }
 
@@ -102,9 +87,8 @@ async function fetchDJ(): Promise<UniMeal[]> {
     return djCache;
   } catch { return []; }
 }
-
 async function fetchTMDBase(query: string, selCat: string, selArea: string, selIng: string): Promise<UniMeal[]> {
-  const toUni = (m: any): UniMeal => ({ src: 'tmd' as const, id: m.idMeal, name: m.strMeal, image: m.strMealThumb || '', ingredients: ingOfMeal(m), instructions: String(m.strInstructions || '').split(/\r?\n/).filter((l: string) => l.trim()), category: m.strCategory || '', area: m.strArea || '', tags: [] });
+  const toUni = (m: any): UniMeal => ({ src: 'tmd' as const, id: m.idMeal, name: m.strMeal, image: m.strMealThumb || '', ingredients: ingOfMeal(m), instructions: String(m.strInstructions || '').split(/\r?\n/).map(txt).filter(Boolean), category: m.strCategory || '', area: m.strArea || '', tags: [] });
   try {
     if (query) {
       const words = [query, ...query.split(/\s+/).filter(w => w.length > 2 && low(w) !== low(query))];
@@ -124,31 +108,19 @@ async function fetchTMDBase(query: string, selCat: string, selArea: string, selI
     return out;
   } catch { return []; }
 }
-
 async function fetchPageHtml(url: string): Promise<string> {
   const cap = (window as any).Capacitor;
   if (cap?.isNativePlatform?.()) {
-    const res = await CapacitorHttp.get({ url, headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 12; Romo/1.9)' } });
+    const res = await CapacitorHttp.get({ url, headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 12; Romo/1.10)' } });
     return typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
   }
-  
-  // Try multiple proxies for desktop
-  const proxies = [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?',
-    'https://api.codetabs.com/v1/proxy?quest=',
-  ];
-  
-  for (const proxy of proxies) {
-    try {
-      const r = await fetch(proxy + encodeURIComponent(url));
-      if (r.ok) return await r.text();
-    } catch { /* try next */ }
+  const proxies = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?', 'https://api.codetabs.com/v1/proxy?quest='];
+  for (const p of proxies) {
+    try { const r = await fetch(p + encodeURIComponent(url)); if (r.ok) { const t = await r.text(); if (t && t.length > 200) return t; } } catch { /* next */ }
   }
-  
-  throw new Error('All proxies failed');
+  try { const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url)); if (r.ok) { const j = await r.json(); if (j.contents) return j.contents; } } catch { /* ignore */ }
+  throw new Error('fetch failed');
 }
-
 function findRecipeNode(node: any): any | null {
   if (!node || typeof node !== 'object') return null;
   const t = node['@type'];
@@ -157,35 +129,25 @@ function findRecipeNode(node: any): any | null {
   if (node['@graph']) { const r = findRecipeNode(node['@graph']); if (r) return r; }
   return null;
 }
-
 function extractRecipe(html: string): any | null {
-  // First try JSON-LD
   const blocks = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
   for (const b of blocks) { let j: any = null; try { j = JSON.parse(b.trim()); } catch { continue; } const f = findRecipeNode(j); if (f) return f; }
-  
-  // Fallback: parse HTML directly
   const parsed = parseHTMLRecipe(html);
-  if (parsed.ingredients.length > 0 || parsed.instructions.length > 0) {
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i) || html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
-    return {
-      name: titleMatch ? titleMatch[1].replace(/ - .*$/, '').trim() : 'Imported Recipe',
-      recipeIngredient: parsed.ingredients,
-      recipeInstructions: parsed.instructions,
-      image: parsed.image,
-    };
+  if (parsed.ingredients.length || parsed.instructions.length) {
+    const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) || html.match(/<title[^>]*>([^<]+)<\/title>/i) || html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    return { name: titleMatch ? txt(titleMatch[1]).replace(/[-|–].*$/, '').trim() : 'Imported Recipe', recipeIngredient: parsed.ingredients, recipeInstructions: parsed.instructions, image: parsed.image };
   }
-  
   return null;
 }
-
-function normalizeRecipe(node: any, url: string): BoxRecipe {
-  const ingredients = (node.recipeIngredient || node.ingredients || []).map((x: any) => String(x).trim()).filter(Boolean);
+function normalizeRecipe(node: any, url: string, fbImage?: string): BoxRecipe {
+  const ingredients = (node.recipeIngredient || node.ingredients || []).map((x: any) => cleanLine(String(x))).filter(Boolean);
   let instructions: string[] = [];
   const ri = node.recipeInstructions;
-  if (typeof ri === 'string') instructions = ri.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
-  else if (Array.isArray(ri)) instructions = ri.map((s: any) => (typeof s === 'string' ? s : s.text || '')).map((s: string) => s.trim()).filter(Boolean);
-  const img = typeof node.image === 'string' ? node.image : Array.isArray(node.image) ? String(node.image[0] || '') : '';
-  return { id: 'import-' + Date.now(), name: String(node.name || 'Imported recipe').trim(), emoji: '🍽️', image: img, ingredients, instructions, category: String(node.recipeCategory || 'imported').replace(/,/g, ' '), source: url, savedAt: new Date().toISOString() };
+  if (typeof ri === 'string') instructions = ri.split(/\r?\n/).map(txt).filter(Boolean);
+  else if (Array.isArray(ri)) instructions = ri.map((s: any) => (typeof s === 'string' ? s : s.text || '')).map(txt).filter(Boolean);
+  let img = typeof node.image === 'string' ? node.image : Array.isArray(node.image) ? String(node.image[0] || '') : (node.image && node.image.url ? String(node.image.url) : '');
+  if (!img && fbImage) img = fbImage;
+  return { id: 'import-' + Date.now(), name: cleanLine(String(node.name || 'Imported recipe')), emoji: '🍽️', image: img, ingredients, instructions, category: String(node.recipeCategory || 'imported').replace(/,/g, ' '), source: url, savedAt: new Date().toISOString() };
 }
 
 export default function RecipesPage(_props?: any) {
@@ -200,7 +162,6 @@ export default function RecipesPage(_props?: any) {
   const [scanned, setScanned] = useState(0);
   const [cache, setCache] = useState<Record<string, UniMeal>>({});
   const [page, setPage] = useState(1);
-  const [note, setNote] = useState('');
   const [searching, setSearching] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const [importUrl, setImportUrl] = useState('');
@@ -217,47 +178,24 @@ export default function RecipesPage(_props?: any) {
 
   const matches = (m: UniMeal): boolean => {
     const ing = ingsOf(m);
-    
-    // If no filters active, show everything
-    const hasFilters = query || selCat !== 'Any' || selArea !== 'Any' || selIng || diet !== 'all';
-    if (!hasFilters) return true;
-    
-    // Match search query (if provided)
-    if (query) {
-      const q = low(query);
-      const nameMatch = low(m.name).includes(q);
-      const ingMatch = ing.some(i => low(i).includes(q));
-      const tagMatch = m.tags.some(t => low(t).includes(q));
-      if (!nameMatch && !ingMatch && !tagMatch) return false;
+    if (m.src !== 'wb') {
+      if (query) {
+        const words = low(query).split(/\s+/).filter(w => w.length > 2);
+        const hay = low(m.name) + ' ' + m.tags.map(low).join(' ') + ' ' + ing.map(low).join(' ');
+        if (words.length && !words.some(w => hay.includes(w))) return false;
+      }
+      if (selCat !== 'Any') { const c = low(selCat); if (!(low(m.category).includes(c) || m.tags.some(t => low(t).includes(c)))) return false; }
+      if (selArea !== 'Any') { if (!low(m.area).includes(low(selArea))) return false; }
     }
-    
-    // Match category (if provided)
-    if (selCat !== 'Any') {
-      const c = low(selCat);
-      if (!(low(m.category).includes(c) || m.tags.some(t => low(t).includes(c)))) return false;
-    }
-    
-    // Match area (if provided, skip Wikibooks)
-    if (selArea !== 'Any' && m.area !== 'Wikibooks') {
-      if (!low(m.area).includes(low(selArea))) return false;
-    }
-    
-    // Match ingredient (if provided)
-    if (selIng) {
-      if (!ing.some(i => low(i).includes(low(selIng)))) return false;
-    }
-    
-    // Match diet (if provided)
+    if (selIng) { if (!ing.some(i => low(i).includes(low(selIng)))) return false; }
     if (diet === 'vegan') return isVegan(ing);
     if (diet === 'vegetarian') return isVegetarian(ing);
     if (diet === 'glutenfree') return isGlutenFree(ing);
     if (diet === 'dairyfree') return isDairyFree(ing);
     if (diet === 'nutfree') return isNutFree(ing);
     if (diet === 'eggfree') return isEggFree(ing);
-    
     return true;
   };
-  
   const filtered = base.filter(matches);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -265,7 +203,7 @@ export default function RecipesPage(_props?: any) {
 
   const enrich = async (meals: UniMeal[], activeDiet: Diet, activeIng: string) => {
     const needT = meals.filter(m => m.src === 'tmd' && !m.ingredients.length && !cache[m.id]).slice(0, 120);
-    const needW = (activeDiet !== 'all' || activeIng) ? meals.filter(m => m.src === 'wb' && !cache[m.id]).slice(0, 15) : [];
+    const needW = (activeDiet !== 'all' || activeIng) ? meals.filter(m => m.src === 'wb' && !cache[m.id]).slice(0, 25) : [];
     if (!needT.length && !needW.length) return;
     setEnriching(true);
     for (let i = 0; i < needT.length; i += 10) {
@@ -274,7 +212,7 @@ export default function RecipesPage(_props?: any) {
         try {
           const r = await fetch(TMD + 'lookup.php?i=' + m.id);
           const j = await r.json();
-          if (j.meals && j.meals[0]) setCache(c => ({ ...c, [m.id]: { ...m, ingredients: ingOfMeal(j.meals[0]), instructions: String(j.meals[0].strInstructions || '').split(/\r?\n/).filter((l: string) => l.trim()) } }));
+          if (j.meals && j.meals[0]) setCache(c => ({ ...c, [m.id]: { ...m, ingredients: ingOfMeal(j.meals[0]), instructions: String(j.meals[0].strInstructions || '').split(/\r?\n/).map(txt).filter(Boolean) } }));
         } catch { /* skip */ }
       }));
     }
@@ -288,9 +226,10 @@ export default function RecipesPage(_props?: any) {
   };
 
   const runFind = async () => {
-    setSearching(true); setNote(''); setPage(1);
+    setSearching(true); setPage(1);
     const q = query.trim();
-    const [tmd, dj, wb] = await Promise.all([fetchTMDBase(q, selCat, selArea, selIng.trim()), fetchDJ(), q ? fetchWB(q) : Promise.resolve([] as UniMeal[])]);
+    const wbQ = q || [DIET_WORD[diet], selCat !== 'Any' ? selCat : '', selArea !== 'Any' ? selArea : '', selIng.trim()].filter(Boolean).join(' ');
+    const [tmd, dj, wb] = await Promise.all([fetchTMDBase(q, selCat, selArea, selIng.trim()), fetchDJ(), wbQ ? fetchWB(wbQ) : Promise.resolve([] as UniMeal[])]);
     const seen = new Set<string>();
     const merged: UniMeal[] = [];
     [...tmd, ...dj, ...wb].forEach(m => { const k = low(m.name); if (!seen.has(k)) { seen.add(k); merged.push(m); } });
@@ -318,17 +257,15 @@ export default function RecipesPage(_props?: any) {
     }
     const r = await fetch(TMD + 'lookup.php?i=' + m.id);
     const j = await r.json();
-    const full = { ...m, ingredients: ingOfMeal(j.meals[0]), instructions: String(j.meals[0].strInstructions || '').split(/\r?\n/).filter((l: string) => l.trim()) };
+    const full = { ...m, ingredients: ingOfMeal(j.meals[0]), instructions: String(j.meals[0].strInstructions || '').split(/\r?\n/).map(txt).filter(Boolean) };
     setCache(c => ({ ...c, [m.id]: full }));
     return full;
   };
-  
   const saveMeal = async (m: UniMeal) => {
     const full = await ensureUni(m);
     const rec: BoxRecipe = { id: full.src + '-' + full.id, name: full.name, emoji: full.src === 'wb' ? '📖' : '🍽️', image: full.image, ingredients: full.ingredients, instructions: full.instructions, category: full.category || full.area || 'web', source: sourceOf(full), savedAt: new Date().toISOString() };
     if (!box.some(b => b.id === rec.id)) persistBox([rec, ...box]);
   };
-  
   const toggleOpen = async (m: UniMeal) => {
     if (open === m.id) { setOpen(null); return; }
     setOpen(m.id);
@@ -340,16 +277,23 @@ export default function RecipesPage(_props?: any) {
     if (!url.startsWith('http')) { setImportError('Paste the full recipe URL (starting with http…)'); return; }
     setImporting(true); setImportError(''); setPreview(null);
     try {
-      const html = await fetchPageHtml(url);
+      let html = '';
+      const wbM = url.match(/wikibooks\.org\/wiki\/([^?#]+)/);
+      if (wbM) {
+        const r = await fetch(WB + 'action=parse&page=' + encodeURIComponent(decodeURIComponent(wbM[1])) + '&prop=text&format=json&origin=*');
+        const j = await r.json();
+        html = (j.parse && j.parse.text && (j.parse.text['*'] || '')) || '';
+        if (!html) throw new Error('wikibooks empty');
+      } else {
+        html = await fetchPageHtml(url);
+      }
       const node = extractRecipe(html);
-      if (!node) { setImportError('Could not extract recipe data from this page. The site might not use standard recipe markup. Try a different recipe site.'); return; }
-      setPreview(normalizeRecipe(node, url));
-    } catch (e: any) {
-      setImportError('Could not fetch this page. Some sites block automated access. Try importing this recipe on the phone app instead, or try a different site.');
-    }
-    finally { setImporting(false); }
+      if (!node) { setImportError('Could not find recipe data on that page. Try a different recipe URL.'); return; }
+      setPreview(normalizeRecipe(node, url, ogImage(html)));
+    } catch {
+      setImportError('Could not fetch this page — some sites block automated access from desktop. It usually works on the phone build, or try another URL.');
+    } finally { setImporting(false); }
   };
-  
   const savePreview = () => {
     if (!preview) return;
     if (!box.some(b => b.source === preview.source)) persistBox([preview, ...box]);
@@ -371,11 +315,11 @@ export default function RecipesPage(_props?: any) {
       {r.image && <img src={r.image} alt="" className="w-full h-40 object-cover rounded-xl" />}
       <div>
         <p className="text-xs font-semibold text-gray-600 mb-1">Ingredients</p>
-        <ul className="text-xs text-gray-600 space-y-0.5 list-disc pl-4">{r.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}</ul>
+        <ul className="text-xs text-gray-600 space-y-0.5 list-disc pl-4">{r.ingredients.map((ing, i) => <li key={i}>{cleanLine(ing)}</li>)}</ul>
       </div>
       <div>
         <p className="text-xs font-semibold text-gray-600 mb-1">Steps</p>
-        <ol className="text-xs text-gray-600 space-y-1 list-decimal pl-4">{r.instructions.map((s, i) => <li key={i}>{s}</li>)}</ol>
+        <ol className="text-xs text-gray-600 space-y-1 list-decimal pl-4">{r.instructions.map((s, i) => <li key={i}>{cleanLine(s)}</li>)}</ol>
       </div>
       {r.source && <a href={r.source} target="_blank" rel="noreferrer" className="text-xs text-teal-600 underline block">Original source ↗</a>}
     </div>
@@ -423,7 +367,7 @@ export default function RecipesPage(_props?: any) {
 
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-teal-100 space-y-2">
             <p className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Download size={14} className="text-teal-500" /> 🧼 Ad-free import — paste ANY recipe URL</p>
-            <p className="text-[11px] text-gray-400">Strips ads & life stories, keeps ingredients + steps. Works best with sites that use standard recipe markup.</p>
+            <p className="text-[11px] text-gray-400">Strips ads & life stories, keeps ingredients + steps + photo. Wikibooks URLs import directly!</p>
             <div className="flex gap-2">
               <input value={importUrl} onChange={e => setImportUrl(e.target.value)} placeholder="https://…/recipes/some-dish" className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
               <button onClick={handleImport} className="bg-teal-500 text-white px-4 py-2 rounded-xl text-sm">{importing ? '…' : 'Import'}</button>
@@ -439,13 +383,13 @@ export default function RecipesPage(_props?: any) {
                 <Detail r={preview} />
               </div>
             )}
-            <p className="text-[10px] text-gray-400">Credits: TheMealDB + DummyJSON open recipe data 💛</p>
+            <p className="text-[10px] text-gray-400">Credits: TheMealDB + DummyJSON open recipe data + Wikibooks Cookbook community recipes 💛</p>
           </div>
 
           {searching && <p className="text-center text-gray-400 text-sm py-8 animate-pulse">Searching three recipe databases…</p>}
           {enriching && <p className="text-center text-gray-400 text-xs animate-pulse">🔬 Checking ingredients against your filters…</p>}
           {!searching && base.length > 0 && (
-            <p className="text-xs text-amber-600 text-center">{filtered.length} of {scanned} recipes scanned across all databases match your filters{note ? ' — ' + note : ''}</p>
+            <p className="text-xs text-amber-600 text-center">{filtered.length} of {scanned} recipes scanned across all databases match your filters</p>
           )}
 
           {filtered.length > 0 && (
@@ -456,9 +400,14 @@ export default function RecipesPage(_props?: any) {
             </div>
           )}
           {base.length > 0 && filtered.length === 0 && !enriching && (
-            <div className="text-center py-8 space-y-2">
-              <p className="text-gray-400 text-sm">Nothing matches this combination.</p>
-              <p className="text-xs text-gray-400">Try removing some filters, or use the ad-free importer above to add recipes from your favorite sites!</p>
+            <div className="text-center py-8 space-y-3">
+              <p className="text-gray-400 text-sm">Nothing matches this exact combination.</p>
+              <div className="flex gap-2 justify-center flex-wrap">
+                {diet !== 'all' && <button onClick={() => setDiet('all')} className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700">Show ignoring diet</button>}
+                {(selCat !== 'Any' || selArea !== 'Any' || selIng) && <button onClick={() => { setSelCat('Any'); setSelArea('Any'); setSelIng(''); }} className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700">Show ignoring category/region/ingredient</button>}
+                {query && <button onClick={() => setQuery('')} className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700">Show ignoring search text</button>}
+              </div>
+              <p className="text-xs text-gray-400">Or import from your favorite sensitivity-friendly site with the ad-free importer 🧼</p>
             </div>
           )}
 
@@ -469,7 +418,7 @@ export default function RecipesPage(_props?: any) {
                 <div className="flex items-center gap-3">
                   {m.image ? <img src={m.image} alt={m.name} className="w-14 h-14 rounded-xl object-cover" /> : <span className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center text-2xl">{m.src === 'wb' ? '📖' : '🍽️'}</span>}
                   <div className="flex-1">
-                    <p className="font-medium text-gray-800 text-sm">{m.name}</p>
+                    <p className="font-medium text-gray-800 text-sm">{dec(m.name)}</p>
                     <p className="text-[10px] text-gray-400 capitalize">{m.area || m.category || 'web'}{m.tags.length ? ' • ' + m.tags.slice(0, 2).join(', ') : ''}</p>
                   </div>
                   <div className="flex gap-2">
@@ -488,7 +437,7 @@ export default function RecipesPage(_props?: any) {
       {tab === 'box' && box.map(r => (
         <div key={r.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
-            <p className="font-medium text-gray-800 text-sm">{r.emoji} {r.name}</p>
+            <p className="font-medium text-gray-800 text-sm">{r.emoji} {dec(r.name)}</p>
             <div className="flex gap-2">
               <button onClick={() => setOpen(open === r.id ? null : r.id)} className="text-gray-400">{open === r.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
               <button onClick={() => persistBox(box.filter(b => b.id !== r.id))} className="text-gray-300 hover:text-red-400"><Trash2 size={16} /></button>
