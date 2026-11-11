@@ -1,3 +1,6 @@
+import StatsPage from './components/StatsPage';
+import TrickLibraryPage from './components/TrickLibraryPage';
+import MedicationsPage from './components/MedicationsPage';
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Page, UserProfile, DailyCheckIn, SleepLog, Goal, Hobby, Movement } from './types';
@@ -13,6 +16,7 @@ import LockScreen from './components/LockScreen';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [, bump] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [profile, setProfile] = useLocalStorage<UserProfile>('romo-profile', {
     name: '',
@@ -59,6 +63,10 @@ export default function App() {
             movements={movements}
             setMovements={setMovements}
             profileName={profile.name}
+            meds={JSON.parse(localStorage.getItem('romo-meds-v2') || '[]')}
+            setMeds={(m) => { localStorage.setItem('romo-meds-v2', JSON.stringify(m)); bump(b => b + 1); }}
+            intakes={JSON.parse(localStorage.getItem('romo-intakes-v2') || '[]')}
+            setIntakes={(i) => { localStorage.setItem('romo-intakes-v2', JSON.stringify(i)); bump(b => b + 1); }}
           />
         );
       case 'goals':
@@ -84,6 +92,8 @@ export default function App() {
             goals={goals}
           />
         );
+      case 'meds': return <MedicationsPage />;
+      case 'tricks': return <TrickLibraryPage />;
       case 'settings':
         return (
           <SettingsPage
@@ -96,6 +106,8 @@ export default function App() {
             setMovements={setMovements}
           />
         );
+      case 'stats':
+        return <StatsPage />;
       default:
         return null;
     }

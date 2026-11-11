@@ -2,7 +2,17 @@ import { useState } from 'react';
 import type { DailyCheckIn, SleepLog, Movement } from '../types';
 import { getDailyAffirmation } from '../data/affirmations';
 import { format } from 'date-fns';
-import { Moon, Heart, Zap } from 'lucide-react';
+import { Moon, Heart, Zap, Pill, Check } from 'lucide-react';
+
+type Freq = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+interface Med { id: string; name: string; emoji: string; dose: string; pillsLeft: number | null; refillAt: number; start: string; end: string; freq: Freq; times: string[]; weekdays: number[]; monthDay: number; remind: boolean; note: string; }
+interface Intake { medId: string; date: string; time: string; status: 'taken' | 'skipped'; note: string; }
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const fmt = (d: Date) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parse = (s: string) => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const dim = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+const TODAY = () => fmt(new Date());
 
 interface DashboardProps {
   checkIns: DailyCheckIn[];
@@ -12,6 +22,10 @@ interface DashboardProps {
   movements: Movement[];
   setMovements: (value: Movement[] | ((prev: Movement[]) => Movement[])) => void;
   profileName: string;
+  meds: Med[];
+  setMeds: (m: Med[]) => void;
+  intakes: Intake[];
+  setIntakes: (i: Intake[]) => void;
 }
 
 const moodEmojis = {
@@ -22,7 +36,7 @@ const moodEmojis = {
   bad: { emoji: '😢', label: 'Bad', color: 'bg-red-100 text-red-700 border-red-200' },
 };
 
-export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLogs, movements, setMovements, profileName }: DashboardProps) {
+export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLogs, movements, setMovements, profileName, meds, setMeds, intakes, setIntakes }: DashboardProps) {
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showSleep, setShowSleep] = useState(false);
   const [showMovement, setShowMovement] = useState(false);
@@ -107,6 +121,33 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
     return count;
   })();
 
+  // Meds Logic
+  const todayMeds = meds.filter(m => {
+    if (today < m.start || (m.end && today > m.end)) return false;
+    const d = parse(today);
+    if (m.freq === 'daily') return true;
+    if (m.freq === 'monthly') return d.getDate() === Math.min(m.monthDay, dim(d.getFullYear(), d.getMonth()));
+    if (!m.weekdays.includes(d.getDay())) return false;
+    if (m.freq === 'weekly') return true;
+    return Math.floor((d.getTime() - parse(m.start).getTime()) / 604800000) % 2 === 0;
+  });
+
+  const toggleMedStatus = (m: Med, time: string, status: 'taken' | 'skipped' | null) => {
+    const old = intakes.find(i => i.medId === m.id && i.date === today && i.time === time);
+    const oldTaken = old?.status === 'taken' ? 1 : 0;
+    const newTaken = status === 'taken' ? 1 : 0;
+    let next = intakes.filter(i => !(i.medId === m.id && i.date === today && i.time === time));
+    if (status) next = [{ medId: m.id, date: today, time, status, note: old?.note || '' }, ...next];
+    setIntakes(next);
+    localStorage.setItem('romo-intakes-v2', JSON.stringify(next));
+    
+    if (m.pillsLeft !== null && oldTaken !== newTaken) {
+      const newMeds = meds.map(x => x.id === m.id ? { ...x, pillsLeft: Math.max(0, (x.pillsLeft || 0) + oldTaken - newTaken) } : x);
+      setMeds(newMeds);
+      localStorage.setItem('romo-meds-v2', JSON.stringify(newMeds));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Affirmation Card */}
@@ -138,6 +179,47 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
           <div className="text-xs text-gray-500">Minutes Active</div>
         </div>
       </div>
+
+      {/* Today's Medications */}
+      {todayMeds.length > 0 && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Pill size={18} className="text-rose-500" />
+              Today's Medications
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {todayMeds.map(m => (
+              <div key={m.id} className="border border-gray-100 rounded-xl p-3 space-y-2">
+                <p className="text-sm font-medium text-gray-800">{m.emoji} {m.name} <span className="text-xs text-gray-400">• {m.dose}</span></p>
+                {m.times.map(t => {
+                  const it = intakes.find(i => i.medId === m.id && i.date === today && i.time === t);
+                  const isTaken = it?.status === 'taken';
+                  const isSkipped = it?.status === 'skipped';
+                  return (
+                    <div key={t} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-12">{t}</span>
+                      <button 
+                        onClick={() => toggleMedStatus(m, t, isTaken ? null : 'taken')}
+                        className={`px-2 py-1 rounded-lg text-xs flex items-center gap-1 border ${isTaken ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                      >
+                        <Check size={12} /> {isTaken ? 'Taken' : 'Mark Taken'}
+                      </button>
+                      <button 
+                         onClick={() => toggleMedStatus(m, t, isSkipped ? null : 'skipped')}
+                         className={`px-2 py-1 rounded-lg text-xs border ${isSkipped ? 'bg-pink-100 border-pink-200 text-pink-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                      >
+                        Skipped
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Daily Check-In Section */}
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -179,7 +261,6 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
           </div>
         ) : showCheckIn ? (
           <div className="space-y-4">
-            {/* Mood Selection */}
             <div>
               <label className="text-sm font-medium text-gray-600 mb-2 block">How are you feeling?</label>
               <div className="flex gap-2 flex-wrap">
@@ -196,8 +277,6 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
                 ))}
               </div>
             </div>
-
-            {/* Energy Level */}
             <div>
               <label className="text-sm font-medium text-gray-600 mb-2 block">Energy Level</label>
               <div className="flex gap-2">
@@ -214,8 +293,6 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
                 ))}
               </div>
             </div>
-
-            {/* Gratitude */}
             <div>
               <label className="text-sm font-medium text-gray-600 mb-2 block">What are you grateful for?</label>
               {gratitude.map((g, i) => (
@@ -233,8 +310,6 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
                 />
               ))}
             </div>
-
-            {/* Notes */}
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -242,7 +317,6 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-300 resize-none"
               rows={2}
             />
-
             <button
               onClick={handleSubmitCheckIn}
               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2.5 rounded-xl font-medium hover:from-pink-600 hover:to-rose-600 transition shadow-sm"

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Page } from '../types';
-import { Home, Target, ChefHat, Clock, Settings, BarChart3 } from 'lucide-react';
+import { Home, Target, ChefHat, Clock, Settings, Pill, ListTree, BarChart3 } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,10 +11,12 @@ interface LayoutProps {
 
 const navItems: { page: Page; label: string; icon: typeof Home }[] = [
   { page: 'dashboard', label: 'Home', icon: Home },
+  { page: 'meds', label: 'Meds', icon: Pill },
   { page: 'goals', label: 'Goals', icon: Target },
   { page: 'recipes', label: 'Recipes', icon: ChefHat },
-  { page: 'statistics', label: 'Stats', icon: BarChart3 },
   { page: 'history', label: 'History', icon: Clock },
+  { page: 'stats', label: 'Stats', icon: BarChart3 },
+  { page: 'tricks', label: 'Tricks', icon: ListTree },
   { page: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -44,12 +46,12 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-amber-100 z-50">
-        <div className="max-w-4xl mx-auto px-2 py-2 flex justify-around">
+        <div className="max-w-4xl mx-auto px-2 py-2 flex justify-around overflow-x-auto">
           {navItems.map(({ page, label, icon: Icon }) => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all shrink-0 ${
                 currentPage === page
                   ? 'text-amber-600 bg-amber-50'
                   : 'text-gray-400 hover:text-gray-600'
