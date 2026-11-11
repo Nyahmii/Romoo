@@ -92,4 +92,4 @@ export interface WeeklyGoal {
   weekStart: string;
 }
 
-export type Page = 'dashboard' | 'goals' | 'recipes' | 'history' | 'settings' | 'statistics';
+export type Page = 'dashboard' | 'goals' | 'recipes' | 'history' | 'settings' | 'statistics' | 'meds' | 'tricks' | 'stats';

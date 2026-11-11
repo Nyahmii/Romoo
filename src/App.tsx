@@ -1,6 +1,3 @@
-import StatsPage from './components/StatsPage';
-import TrickLibraryPage from './components/TrickLibraryPage';
-import MedicationsPage from './components/MedicationsPage';
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Page, UserProfile, DailyCheckIn, SleepLog, Goal, Hobby, Movement } from './types';
@@ -11,12 +8,18 @@ import RecipesPage from './components/RecipesPage';
 import HistoryPage from './components/HistoryPage';
 import SettingsPage from './components/SettingsPage';
 import StatisticsPage from './components/StatisticsPage';
+import MedicationsPage from './components/MedicationsPage';
+import TrickLibraryPage from './components/TrickLibraryPage';
+import StatsPage from './components/StatsPage';
 import Onboarding from './components/Onboarding';
 import LockScreen from './components/LockScreen';
 
+type Freq = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+interface Med { id: string; name: string; emoji: string; dose: string; pillsLeft: number | null; refillAt: number; start: string; end: string; freq: Freq; times: string[]; weekdays: number[]; monthDay: number; remind: boolean; note: string; }
+interface Intake { medId: string; date: string; time: string; status: 'taken' | 'skipped'; note: string; }
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-  const [, bump] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [profile, setProfile] = useLocalStorage<UserProfile>('romo-profile', {
     name: '',
@@ -31,8 +34,10 @@ export default function App() {
   const [goals, setGoals] = useLocalStorage<Goal[]>('romo-goals', []);
   const [hobbies, setHobbies] = useLocalStorage<Hobby[]>('romo-hobbies', []);
   const [movements, setMovements] = useLocalStorage<Movement[]>('romo-movements', []);
+  
+  const [meds, setMeds] = useLocalStorage<Med[]>('romo-meds-v2', []);
+  const [intakes, setIntakes] = useLocalStorage<Intake[]>('romo-intakes-v2', []);
 
-  // Check if PIN is set and lock the app
   useEffect(() => {
     if (profile.pin && profile.hasCompletedOnboarding) {
       setIsLocked(true);
@@ -63,10 +68,10 @@ export default function App() {
             movements={movements}
             setMovements={setMovements}
             profileName={profile.name}
-            meds={JSON.parse(localStorage.getItem('romo-meds-v2') || '[]')}
-            setMeds={(m) => { localStorage.setItem('romo-meds-v2', JSON.stringify(m)); bump(b => b + 1); }}
-            intakes={JSON.parse(localStorage.getItem('romo-intakes-v2') || '[]')}
-            setIntakes={(i) => { localStorage.setItem('romo-intakes-v2', JSON.stringify(i)); bump(b => b + 1); }}
+            meds={meds}
+            setMeds={setMeds}
+            intakes={intakes}
+            setIntakes={setIntakes}
           />
         );
       case 'goals':
@@ -92,8 +97,12 @@ export default function App() {
             goals={goals}
           />
         );
-      case 'meds': return <MedicationsPage />;
-      case 'tricks': return <TrickLibraryPage />;
+      case 'meds':
+        return <MedicationsPage />;
+      case 'tricks':
+        return <TrickLibraryPage />;
+      case 'stats':
+        return <StatsPage />;
       case 'settings':
         return (
           <SettingsPage
@@ -106,8 +115,6 @@ export default function App() {
             setMovements={setMovements}
           />
         );
-      case 'stats':
-        return <StatsPage />;
       default:
         return null;
     }
