@@ -9,11 +9,12 @@ export default function UpdateChecker() {
     try {
       const u = await checkForUpdate();
       if (!u) { setStatus('You are on the latest version (v' + APP_VERSION + ') ✓'); return; }
-      setStatus('Downloading v' + u.version + '…');
+      setStatus('Opening browser for v' + u.version + '…');
       await downloadAndInstall(u.url);
-      setStatus('Opening installer…');
-    } catch {
-      setStatus('Check failed — are you online?');
+      setStatus('Check your downloads to install!');
+    } catch (e: any) {
+      console.error(e);
+      setStatus('Check failed: ' + (e.message || 'Are you online?'));
     }
   };
   return (
