@@ -19,7 +19,7 @@ export default function TrickLibraryPage() {
     <div className="space-y-4">
       <div className="bg-gradient-to-r from-teal-100 to-cyan-100 rounded-2xl p-5 border border-teal-200">
         <h2 className="text-lg font-semibold text-teal-800">🛹 Trick Library — Flow Tree</h2>
-        <p className="text-xs text-teal-700 mt-1">Made for Hazel: branch tricks 10 levels deep. Scratch one off and it lands in your Learned shelf below!</p>
+        <p className="text-xs text-teal-700 mt-1">Branch your tricks up to 10 levels deep. Scratch one off and it lands in your Learned shelf below!</p>
       </div>
       <GoalTree storageKey="romo-trick-tree" title="Trick Goals" onChange={() => setTick(t => t + 1)} />
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
