@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { DailyCheckIn, SleepLog, Movement } from '../types';
 import { getDailyAffirmation } from '../data/affirmations';
 import { format } from 'date-fns';
-import { Moon, Heart, Zap, Pill, Check } from 'lucide-react';
+import { Moon, Heart, Zap, Pill, Check, Plus, Trash2 } from 'lucide-react';
 
 type Freq = 'daily' | 'weekly' | 'biweekly' | 'monthly';
 interface Med { id: string; name: string; emoji: string; dose: string; pillsLeft: number | null; refillAt: number; start: string; end: string; freq: Freq; times: string[]; weekdays: number[]; monthDay: number; remind: boolean; note: string; }
@@ -44,14 +44,36 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
   const [energy, setEnergy] = useState(3);
   const [gratitude, setGratitude] = useState(['', '', '']);
   const [notes, setNotes] = useState('');
-  const [bedtime, setBedtime] = useState('23:00');
-  const [wakeTime, setWakeTime] = useState('07:00');
   const [sleepQuality, setSleepQuality] = useState(3);
   const [sleepNotes, setSleepNotes] = useState('');
   const [movementType, setMovementType] = useState<Movement['type']>('walk');
   const [movementDuration, setMovementDuration] = useState(15);
   const [movementIntensity, setMovementIntensity] = useState<Movement['intensity']>('moderate');
   const [movementNotes, setMovementNotes] = useState('');
+
+  // Polyphasic Sleep State
+  const [sleepSegments, setSleepSegments] = useState<{id: string, start: string, end: string}[]>([
+    { id: '1', start: '23:00', end: '07:00' }
+  ]);
+
+  const addSleepSegment = () => {
+    setSleepSegments([...sleepSegments, { id: Date.now().toString(), start: '02:00', end: '04:00' }]);
+  };
+
+  const removeSleepSegment = (id: string) => {
+    if (sleepSegments.length > 1) setSleepSegments(sleepSegments.filter(s => s.id !== id));
+  };
+
+  const calculateTotalSleep = () => {
+    return sleepSegments.reduce((total, seg) => {
+      const [sh, sm] = seg.start.split(':').map(Number);
+      const [eh, em] = seg.end.split(':').map(Number);
+      let startMins = sh * 60 + sm;
+      let endMins = eh * 60 + em;
+      if (endMins <= startMins) endMins += 1440; // Handles crossing midnight
+      return total + (endMins - startMins);
+    }, 0) / 60;
+  };
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayCheckIn = checkIns.find(c => c.date === today);
@@ -79,18 +101,18 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
   };
 
   const handleSubmitSleep = () => {
-    const newLog: SleepLog = {
+    const newLog: any = {
       id: Date.now().toString(),
       date: today,
-      bedtime,
-      wakeTime,
+      segments: sleepSegments, 
+      totalHours: Math.round(calculateTotalSleep() * 10) / 10,
       quality: sleepQuality,
       notes: sleepNotes,
     };
     if (todaySleep) {
-      setSleepLogs((prev: SleepLog[]) => prev.map(s => s.id === todaySleep.id ? newLog : s));
+      setSleepLogs((prev: any[]) => prev.map(s => s.id === todaySleep.id ? newLog : s));
     } else {
-      setSleepLogs((prev: SleepLog[]) => [newLog, ...prev]);
+      setSleepLogs((prev: any[]) => [newLog, ...prev]);
     }
     setShowSleep(false);
     setSleepNotes('');
@@ -346,14 +368,28 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
 
         {todaySleep && !showSleep ? (
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Bedtime</span>
-              <span className="font-medium text-gray-800">{todaySleep.bedtime}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Wake time</span>
-              <span className="font-medium text-gray-800">{todaySleep.wakeTime}</span>
-            </div>
+            {todaySleep.segments ? (
+              <div className="space-y-1">
+                {todaySleep.segments.map((seg: any, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm text-gray-500">
+                    <span>Block {idx + 1}</span>
+                    <span>{seg.start} - {seg.end}</span>
+                  </div>
+                ))}
+                <p className="font-medium text-gray-800 mt-2">Total: {todaySleep.totalHours || '0'}h</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Bedtime</span>
+                  <span className="font-medium text-gray-800">{todaySleep.bedtime}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Wake time</span>
+                  <span className="font-medium text-gray-800">{todaySleep.wakeTime}</span>
+                </div>
+              </>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">Quality</span>
               <span>{'⭐'.repeat(todaySleep.quality)}</span>
@@ -362,28 +398,22 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
           </div>
         ) : showSleep ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-gray-600 mb-1 block">Bedtime</label>
-                <input
-                  type="time"
-                  value={bedtime}
-                  onChange={(e) => setBedtime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-indigo-300"
-                />
+            <p className="text-sm font-medium text-gray-600">Sleep Blocks (Total: {calculateTotalSleep().toFixed(1)}h)</p>
+            {sleepSegments.map((seg, idx) => (
+              <div key={seg.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                <span className="text-xs text-gray-500 w-16">Block {idx + 1}</span>
+                <input type="time" value={seg.start} onChange={e => setSleepSegments(sleepSegments.map(s => s.id === seg.id ? {...s, start: e.target.value} : s))} className="flex-1 px-2 py-1 rounded border border-gray-200 text-sm" />
+                <span className="text-gray-400">to</span>
+                <input type="time" value={seg.end} onChange={e => setSleepSegments(sleepSegments.map(s => s.id === seg.id ? {...s, end: e.target.value} : s))} className="flex-1 px-2 py-1 rounded border border-gray-200 text-sm" />
+                {sleepSegments.length > 1 && (
+                  <button onClick={() => removeSleepSegment(seg.id)} className="text-red-400"><Trash2 size={14} /></button>
+                )}
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600 mb-1 block">Wake Time</label>
-                <input
-                  type="time"
-                  value={wakeTime}
-                  onChange={(e) => setWakeTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-indigo-300"
-                />
-              </div>
-            </div>
+            ))}
+            <button onClick={addSleepSegment} className="text-indigo-500 text-xs flex items-center gap-1"><Plus size={12} /> Add interrupted sleep block</button>
+            
             <div>
-              <label className="text-sm font-medium text-gray-600 mb-2 block">Sleep Quality</label>
+              <label className="text-sm font-medium text-gray-600 mb-2 block">Overall Sleep Quality</label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map(n => (
                   <button
@@ -401,7 +431,7 @@ export default function Dashboard({ checkIns, setCheckIns, sleepLogs, setSleepLo
             <textarea
               value={sleepNotes}
               onChange={(e) => setSleepNotes(e.target.value)}
-              placeholder="Dreams, restfulness, anything to note..."
+              placeholder="Dreams, interruptions, restfulness..."
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-indigo-300 resize-none"
               rows={2}
             />

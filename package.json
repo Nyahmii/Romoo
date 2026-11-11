@@ -30,6 +30,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
     "@tailwindcss/vite": "^4.1.7",
     "@types/canvas-confetti": "^1.6.4",
     "@types/react": "^18.2.0",

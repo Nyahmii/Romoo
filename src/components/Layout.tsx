@@ -11,11 +11,13 @@ interface LayoutProps {
   profileName: string;
 }
 
+const [showRecipes] = useState(() => localStorage.getItem('romo-show-recipes') === 'true');
+
 const navItems: { page: Page; label: string; icon: typeof Home }[] = [
   { page: 'dashboard', label: 'Home', icon: Home },
   { page: 'meds', label: 'Meds', icon: Pill },
   { page: 'goals', label: 'Goals', icon: Target },
-  { page: 'recipes', label: 'Recipes', icon: ChefHat },
+  ...(showRecipes ? [{ page: 'recipes', label: 'Recipes', icon: ChefHat }] : []),
   { page: 'history', label: 'History', icon: Clock },
   { page: 'stats', label: 'Stats', icon: BarChart3 },
   { page: 'tricks', label: 'Tricks', icon: ListTree },

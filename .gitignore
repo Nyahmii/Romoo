@@ -54,3 +54,4 @@ desktop.ini
 # Local Capacitor config (if you have local overrides)
 capacitor.config.local.ts
 .next/
+*.keystore

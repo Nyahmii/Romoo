@@ -1,7 +1,7 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { FileOpener } from '@capacitor-community/file-opener';
 
-export const APP_VERSION = '1.0';
+export const APP_VERSION = '1.1';
 const REPO = 'Nyahmii/Romoo';
 export interface UpdateInfo { url: string; version: string; }
 

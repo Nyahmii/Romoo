@@ -422,3 +422,26 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
     <div className="mt-6"><UpdateChecker /></div></div>
   );
 }
+
+const [showRecipes, setShowRecipes] = useState(() => localStorage.getItem('romo-show-recipes') === 'true');
+
+const toggleRecipes = (val: boolean) => {
+  setShowRecipes(val);
+  localStorage.setItem('romo-show-recipes', String(val));
+  window.location.reload(); // Refreshes the nav immediately
+};
+
+// Add this JSX inside your settings UI:
+<div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+  <div>
+    <p className="font-semibold text-gray-800 text-sm">🧑‍🍳 Enable Recipes Tab</p>
+    <p className="text-xs text-gray-500">Search the web for safe, real recipes.</p>
+  </div>
+  <button 
+    onClick={() => toggleRecipes(!showRecipes)} 
+    className={`w-12 h-6 rounded-full relative transition ${showRecipes ? 'bg-teal-500' : 'bg-gray-300'}`}
+  >
+    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition ${showRecipes ? 'left-7' : 'left-1'}`} />
+  </button>
+</div>
+
