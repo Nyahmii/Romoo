@@ -78,10 +78,6 @@ export interface UserProfile {
   hasCompletedOnboarding: boolean;
   theme: 'light' | 'dark';
   pin?: string;
-  llmEnabled?: boolean;
-  llmProvider?: 'web-llm' | 'ollama' | 'none';
-  ollamaUrl?: string;
-  webSearchEnabled?: boolean;
 }
 
 export interface WeeklyGoal {

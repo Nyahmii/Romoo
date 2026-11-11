@@ -25,9 +25,6 @@ export default function App() {
     name: '',
     hasCompletedOnboarding: false,
     theme: 'light',
-    llmEnabled: false,
-    llmProvider: 'none',
-    webSearchEnabled: false,
   });
   const [checkIns, setCheckIns] = useLocalStorage<DailyCheckIn[]>('romo-checkins', []);
   const [sleepLogs, setSleepLogs] = useLocalStorage<SleepLog[]>('romo-sleep', []);

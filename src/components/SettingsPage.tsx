@@ -1,7 +1,7 @@
 import UpdateChecker from './UpdateChecker';
 import { useState } from 'react';
 import { UserProfile, DailyCheckIn, SleepLog, Goal, Hobby, Movement } from '../types';
-import { Settings as SettingsIcon, User, Download, Upload, Trash2, AlertTriangle, Lock, Sparkles } from 'lucide-react';
+import { Settings as SettingsIcon, User, Download, Upload, Trash2, AlertTriangle, Lock } from 'lucide-react';
 
 interface SettingsPageProps {
   profile: UserProfile;
@@ -21,8 +21,6 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
-  const [showLLMSettings, setShowLLMSettings] = useState(false);
-  const [ollamaUrl, setOllamaUrl] = useState(profile.ollamaUrl || 'http://localhost:11434');
   const [showRecipes, setShowRecipes] = useState(() => localStorage.getItem('romo-show-recipes') === 'true');
 
   const toggleRecipes = (val: boolean) => {
@@ -31,48 +29,14 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
     window.location.reload();
   };
 
-  const handleSaveName = () => {
-    if (name.trim()) {
-      setProfile({ ...profile, name: name.trim() });
-    }
-  };
-
+  const handleSaveName = () => { if (name.trim()) setProfile({ ...profile, name: name.trim() }); };
   const handleSetPin = () => {
-    if (newPin.length < 4) {
-      setPinError('PIN must be at least 4 digits');
-      return;
-    }
-    if (newPin !== confirmPin) {
-      setPinError('PINs do not match');
-      return;
-    }
+    if (newPin.length < 4) { setPinError('PIN must be at least 4 digits'); return; }
+    if (newPin !== confirmPin) { setPinError('PINs do not match'); return; }
     setProfile({ ...profile, pin: newPin });
-    setShowPinSetup(false);
-    setNewPin('');
-    setConfirmPin('');
-    setPinError('');
+    setShowPinSetup(false); setNewPin(''); setConfirmPin(''); setPinError('');
   };
-
-  const handleRemovePin = () => {
-    setProfile({ ...profile, pin: undefined });
-  };
-
-  const handleToggleLLM = (enabled: boolean) => {
-    setProfile({ ...profile, llmEnabled: enabled });
-  };
-
-  const handleSetLLMProvider = (provider: 'web-llm' | 'ollama' | 'none') => {
-    setProfile({ ...profile, llmProvider: provider });
-  };
-
-  const handleSaveOllamaUrl = () => {
-    setProfile({ ...profile, ollamaUrl });
-  };
-
-  const handleToggleWebSearch = (enabled: boolean) => {
-    setProfile({ ...profile, webSearchEnabled: enabled });
-  };
-
+  const handleRemovePin = () => setProfile({ ...profile, pin: undefined });
   const handleExport = () => {
     const data = {
       profile,
@@ -86,14 +50,11 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `romo-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
+    a.href = url; a.download = `romo-backup-${new Date().toISOString().split('T')[0]}.json`; a.click();
     URL.revokeObjectURL(url);
     setExportSuccess(true);
     setTimeout(() => setExportSuccess(false), 3000);
   };
-
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -108,20 +69,12 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
         if (data.movements) setMovements(data.movements);
         if (data.profile) setProfile(data.profile);
         alert('Data imported successfully! 🎉');
-      } catch {
-        alert('Error importing data. Please check the file format.');
-      }
+      } catch { alert('Error importing data. Please check the file format.'); }
     };
-    reader.readAsDataURL(file as Blob);
+    reader.readAsText(file as Blob);
   };
-
   const handleResetAll = () => {
-    setCheckIns([]);
-    setSleepLogs([]);
-    setGoals([]);
-    setHobbies([]);
-    setMovements([]);
-    setShowResetConfirm(false);
+    setCheckIns([]); setSleepLogs([]); setGoals([]); setHobbies([]); setMovements([]); setShowResetConfirm(false);
   };
 
   return (
@@ -135,10 +88,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-          <User size={18} className="text-amber-500" />
-          Profile
-        </h2>
+        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4"><User size={18} className="text-amber-500" /> Profile</h2>
         <div className="flex items-center gap-4 mb-4">
           <div className="w-16 h-16 bg-gradient-to-br from-amber-200 to-orange-200 rounded-full flex items-center justify-center text-3xl">🦦</div>
           <div>
@@ -147,36 +97,23 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
           </div>
         </div>
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Update your name..."
-            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-300"
-          />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Update your name..." className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-300" />
           <button onClick={handleSaveName} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">Save</button>
         </div>
       </div>
 
-      {/* Recipes Tab Toggle */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
         <div>
           <p className="font-semibold text-gray-800 text-sm">🧑‍🍳 Enable Recipes Tab</p>
-          <p className="text-xs text-gray-500">Search the web for safe, real recipes.</p>
+          <p className="text-xs text-gray-500">Search the web & build your recipe box.</p>
         </div>
-        <button
-          onClick={() => toggleRecipes(!showRecipes)}
-          className={`w-12 h-6 rounded-full relative transition ${showRecipes ? 'bg-teal-500' : 'bg-gray-300'}`}
-        >
+        <button onClick={() => toggleRecipes(!showRecipes)} className={`w-12 h-6 rounded-full relative transition ${showRecipes ? 'bg-teal-500' : 'bg-gray-300'}`}>
           <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition ${showRecipes ? 'left-7' : 'left-1'}`} />
         </button>
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-          <Lock size={18} className="text-indigo-500" />
-          Security
-        </h2>
+        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4"><Lock size={18} className="text-indigo-500" /> Security</h2>
         {profile.pin ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between bg-green-50 rounded-lg p-3">
@@ -214,69 +151,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-          <Sparkles size={18} className="text-purple-500" />
-          AI & LLM Features
-        </h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-800 text-sm">Enable Local LLM</p>
-              <p className="text-xs text-gray-400">AI-powered recipe generation (runs locally)</p>
-            </div>
-            <button onClick={() => handleToggleLLM(!profile.llmEnabled)} className={`w-12 h-6 rounded-full transition ${profile.llmEnabled ? 'bg-purple-500' : 'bg-gray-300'}`}>
-              <div className={`w-5 h-5 bg-white rounded-full shadow transform transition ${profile.llmEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
-            </button>
-          </div>
-          {profile.llmEnabled && (
-            <div className="space-y-3 pl-2 border-l-2 border-purple-100 ml-2">
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-2 block">LLM Provider</label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" checked={profile.llmProvider === 'web-llm'} onChange={() => handleSetLLMProvider('web-llm')} className="text-purple-500" />
-                    <div>
-                      <p className="text-sm text-gray-800">WebLLM (Browser-based)</p>
-                      <p className="text-xs text-gray-400">Runs in browser using WebGPU (requires compatible device)</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" checked={profile.llmProvider === 'ollama'} onChange={() => handleSetLLMProvider('ollama')} className="text-purple-500" />
-                    <div>
-                      <p className="text-sm text-gray-800">Ollama (Local Server)</p>
-                      <p className="text-xs text-gray-400">Connect to local Ollama instance</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-              {profile.llmProvider === 'ollama' && (
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Ollama URL</label>
-                  <div className="flex gap-2">
-                    <input type="text" value={ollamaUrl} onChange={(e) => setOllamaUrl(e.target.value)} placeholder="http://localhost:11434" className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-purple-300" />
-                    <button onClick={handleSaveOllamaUrl} className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Save</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div>
-              <p className="font-medium text-gray-800 text-sm">Web Recipe Search</p>
-              <p className="text-xs text-gray-400">Search the web for recipes (requires internet)</p>
-            </div>
-            <button onClick={() => handleToggleWebSearch(!profile.webSearchEnabled)} className={`w-12 h-6 rounded-full transition ${profile.webSearchEnabled ? 'bg-blue-500' : 'bg-gray-300'}`}>
-              <div className={`w-5 h-5 bg-white rounded-full shadow transform transition ${profile.webSearchEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-          <Download size={18} className="text-teal-500" />
-          Data Management
-        </h2>
+        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4"><Download size={18} className="text-teal-500" /> Data Management</h2>
         <div className="space-y-3">
           <button onClick={handleExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition text-left">
             <Download size={18} className="text-teal-500" />
@@ -298,10 +173,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-red-100">
-        <h2 className="font-semibold text-red-600 flex items-center gap-2 mb-4">
-          <AlertTriangle size={18} />
-          Danger Zone
-        </h2>
+        <h2 className="font-semibold text-red-600 flex items-center gap-2 mb-4"><AlertTriangle size={18} /> Danger Zone</h2>
         {showResetConfirm ? (
           <div className="space-y-3">
             <p className="text-sm text-gray-600">Are you sure you want to delete ALL data? This cannot be undone!</p>
@@ -324,7 +196,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
         <div className="text-center">
           <span className="text-4xl">🦦</span>
-          <h3 className="font-bold text-amber-900 mt-2">ROMO v1.3</h3>
+          <h3 className="font-bold text-amber-900 mt-2">ROMO v1.5</h3>
           <p className="text-sm text-amber-700 mt-1">Your Wellness Companion</p>
           <p className="text-xs text-amber-500 mt-2">Built with love • Data stored locally on your device</p>
           <p className="text-xs text-amber-400 mt-1">No accounts, no tracking, just you and Romo 💛</p>

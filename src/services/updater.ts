@@ -1,6 +1,6 @@
 import { Browser } from '@capacitor/browser';
 
-export const APP_VERSION = '1.4'; // Make sure this matches your current version
+export const APP_VERSION = '1.5'; // Make sure this matches your current version
 const REPO = 'Nyahmii/Romoo';
 export interface UpdateInfo { url: string; version: string; }
 
