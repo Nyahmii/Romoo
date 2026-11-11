@@ -1,337 +1,140 @@
 import { useState } from 'react';
-import { recipes } from '../data/recipes';
-import { Recipe, UserProfile } from '../types';
-import { ChefHat, Clock, Users, Search, X, Sparkles, Globe, Loader2 } from 'lucide-react';
-import { createLLMService, searchWebRecipes } from '../services/llm';
+import { Search, ChefHat, Trash2, ChevronDown, ChevronUp, Plus, Check } from 'lucide-react';
+import { recipes as builtIn } from '../data/recipes';
+import type { Recipe } from '../types';
 
-interface RecipesPageProps {
-  profile: UserProfile;
+interface BoxRecipe {
+  id: string; name: string; emoji: string; image?: string;
+  ingredients: string[]; instructions: string[]; category: string; source?: string; savedAt: string;
 }
 
-export default function RecipesPage({ profile }: RecipesPageProps) {
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('romo-recipe-favorites') || '[]');
-    } catch { return []; }
-  });
-  const [showLLM, setShowLLM] = useState(false);
-  const [llmPrompt, setLlmPrompt] = useState('');
-  const [llmLoading, setLlmLoading] = useState(false);
-  const [llmResult, setLlmResult] = useState<string>('');
-  const [showWebSearch, setShowWebSearch] = useState(false);
-  const [webQuery, setWebQuery] = useState('');
-  const [webResults, setWebResults] = useState<any[]>([]);
-  const [webLoading, setWebLoading] = useState(false);
+const loadBox = (): BoxRecipe[] => { try { return JSON.parse(localStorage.getItem('romo-recipe-box') || '[]'); } catch { return []; } };
 
-  const llmService = createLLMService(profile);
+export default function RecipesPage(_props?: any) {
+  const [tab, setTab] = useState<'builtin' | 'web' | 'box'>('builtin');
+  const [query, setQuery] = useState('');
+  const [webResults, setWebResults] = useState<any[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [box, setBox] = useState<BoxRecipe[]>(loadBox);
+  const [open, setOpen] = useState<string | null>(null);
 
-  const handleLLMGenerate = async () => {
-    if (!llmService || !llmPrompt.trim()) return;
-    setLlmLoading(true);
+  const persistBox = (next: BoxRecipe[]) => { setBox(next); localStorage.setItem('romo-recipe-box', JSON.stringify(next)); };
+  const inBox = (id: string) => box.some(b => b.id === id);
+
+  const searchWeb = async () => {
+    if (!query.trim()) return;
+    setSearching(true); setWebResults(null);
     try {
-      const result = await llmService.generateRecipe(llmPrompt);
-      setLlmResult(result);
-    } catch (error: any) {
-      setLlmResult('Error: ' + error.message);
+      const r = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=' + encodeURIComponent(query.trim()));
+      const j = await r.json();
+      setWebResults(j.meals || []);
+    } catch { setWebResults([]); }
+    setSearching(false);
+  };
+
+  const saveWeb = (m: any) => {
+    const ingredients: string[] = [];
+    for (let i = 1; i <= 20; i++) {
+      const ing = m['strIngredient' + i]; const meas = m['strMeasure' + i];
+      if (ing && ing.trim()) ingredients.push((meas && meas.trim() ? meas.trim() + ' ' : '') + ing.trim());
     }
-    setLlmLoading(false);
+    const rec: BoxRecipe = {
+      id: 'web-' + m.idMeal, name: m.strMeal, emoji: '🍽️', image: m.strMealThumb, ingredients,
+      instructions: String(m.strInstructions || '').split(/\r?\n/).filter(l => l.trim()),
+      category: m.strCategory || 'web', source: m.strSource || '', savedAt: new Date().toISOString(),
+    };
+    if (!inBox(rec.id)) persistBox([rec, ...box]);
   };
 
-  const handleWebSearch = async () => {
-    if (!webQuery.trim()) return;
-    setWebLoading(true);
-    const results = await searchWebRecipes(webQuery);
-    setWebResults(results);
-    setWebLoading(false);
+  const saveBuiltIn = (r: Recipe) => {
+    const rec: BoxRecipe = { id: 'local-' + r.id, name: r.name, emoji: r.emoji, ingredients: r.ingredients, instructions: r.instructions, category: r.category, savedAt: new Date().toISOString() };
+    if (!inBox(rec.id)) persistBox([rec, ...box]);
   };
 
-  const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
+  const filteredBuiltIn = builtIn.filter(r => !query.trim() || r.name.toLowerCase().includes(query.toLowerCase()) || r.tags.some(t => t.includes(query.toLowerCase())));
 
-  const filteredRecipes = recipes.filter(r => {
-    const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = activeCategory === 'all' || r.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const toggleFavorite = (id: string) => {
-    const newFavs = favorites.includes(id)
-      ? favorites.filter(f => f !== id)
-      : [...favorites, id];
-    setFavorites(newFavs);
-    localStorage.setItem('romo-recipe-favorites', JSON.stringify(newFavs));
-  };
+  const Detail = ({ r }: { r: BoxRecipe }) => (
+    <div className="mt-2 space-y-2">
+      {r.image && <img src={r.image} alt={r.name} className="w-full h-40 object-cover rounded-xl" />}
+      <div>
+        <p className="text-xs font-semibold text-gray-600 mb-1">Ingredients</p>
+        <ul className="text-xs text-gray-600 space-y-0.5 list-disc pl-4">{r.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}</ul>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-gray-600 mb-1">Steps</p>
+        <ol className="text-xs text-gray-600 space-y-1 list-decimal pl-4">{r.instructions.map((s, i) => <li key={i}>{s}</li>)}</ol>
+      </div>
+      {r.source && <a href={r.source} target="_blank" rel="noreferrer" className="text-xs text-teal-600 underline block">Original source ↗</a>}
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <ChefHat className="text-orange-500" size={24} />
-          Recipe Library
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">Discover wholesome recipes for every meal 🍽️</p>
+    <div className="space-y-4">
+      <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-5 border border-amber-200">
+        <h2 className="text-lg font-semibold text-amber-800 flex items-center gap-2"><ChefHat size={18} /> Recipes</h2>
+        <p className="text-xs text-amber-700 mt-1">Browse built-ins, search real recipes from the web, and save favorites to your box!</p>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search recipes or tags..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-orange-300 bg-white"
-        />
+      <div className="flex gap-2">
+        <button onClick={() => setTab('builtin')} className={'px-3 py-1.5 rounded-lg text-xs font-medium ' + (tab === 'builtin' ? 'bg-amber-500 text-white' : 'bg-white text-gray-500 border border-gray-200')}>🍲 Built-in</button>
+        <button onClick={() => setTab('web')} className={'px-3 py-1.5 rounded-lg text-xs font-medium ' + (tab === 'web' ? 'bg-teal-500 text-white' : 'bg-white text-gray-500 border border-gray-200')}>🌐 Web search</button>
+        <button onClick={() => setTab('box')} className={'px-3 py-1.5 rounded-lg text-xs font-medium ' + (tab === 'box' ? 'bg-rose-500 text-white' : 'bg-white text-gray-500 border border-gray-200')}>📦 My Box ({box.length})</button>
       </div>
 
-      {/* Category Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 rounded-lg text-sm capitalize whitespace-nowrap transition ${
-              activeCategory === cat
-                ? 'bg-orange-100 text-orange-700 font-medium'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}
-          >
-            {cat === 'all' ? '🍴 All' : cat === 'breakfast' ? '🌅 Breakfast' : cat === 'lunch' ? '☀️ Lunch' : cat === 'dinner' ? '🌙 Dinner' : cat === 'snack' ? '🍿 Snacks' : '🍰 Dessert'}
-          </button>
-        ))}
-      </div>
-
-      {/* Recipe Grid */}
-      {filteredRecipes.length === 0 ? (
-        <div className="text-center py-12">
-          <span className="text-5xl mb-4 block">🔍</span>
-          <p className="text-gray-400">No recipes found. Try a different search!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredRecipes.map(recipe => (
-            <div
-              key={recipe.id}
-              onClick={() => setSelectedRecipe(recipe)}
-              className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-orange-100 transition-all group"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <span className="text-3xl">{recipe.emoji}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe.id); }}
-                  className="text-lg opacity-60 hover:opacity-100 transition"
-                >
-                  {favorites.includes(recipe.id) ? '❤️' : '🤍'}
-                </button>
-              </div>
-              <h3 className="font-semibold text-gray-800 group-hover:text-orange-600 transition">
-                {recipe.name}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{recipe.description}</p>
-              <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Clock size={12} /> {recipe.prepTime + recipe.cookTime}min
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users size={12} /> {recipe.servings}
-                </span>
-                <span className="capitalize px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full">
-                  {recipe.category}
-                </span>
-              </div>
-            </div>
-          ))}
+      {tab !== 'box' && (
+        <div className="flex gap-2">
+          <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && tab === 'web') searchWeb(); }} placeholder={tab === 'web' ? 'Search the web (e.g. chicken, pasta…)' : 'Filter built-in recipes…'} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
+          {tab === 'web' && <button onClick={searchWeb} className="bg-teal-500 text-white px-4 py-2 rounded-xl text-sm flex items-center gap-1"><Search size={14} /> Go</button>}
         </div>
       )}
 
-      {/* AI Recipe Generator */}
-      {profile.llmEnabled && llmService && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <Sparkles size={18} className="text-purple-500" />
-              AI Recipe Generator
-            </h2>
-            <button
-              onClick={() => setShowLLM(!showLLM)}
-              className="text-sm bg-purple-50 text-purple-600 px-3 py-1 rounded-lg hover:bg-purple-100 transition"
-            >
-              {showLLM ? 'Close' : 'Generate'}
-            </button>
+      {tab === 'builtin' && filteredBuiltIn.map(r => (
+        <div key={r.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-gray-800 text-sm">{r.emoji} {r.name}</p>
+            <div className="flex gap-2">
+              <button title="Save to My Box" onClick={() => saveBuiltIn(r)} className={inBox('local-' + r.id) ? 'text-emerald-500' : 'text-gray-300 hover:text-amber-500'}>{inBox('local-' + r.id) ? <Check size={16} /> : <Plus size={16} />}</button>
+              <button onClick={() => setOpen(open === r.id ? null : r.id)} className="text-gray-400">{open === r.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
+            </div>
           </div>
-
-          {showLLM && (
-            <div className="space-y-3">
-              <textarea
-                value={llmPrompt}
-                onChange={(e) => setLlmPrompt(e.target.value)}
-                placeholder="Describe what you want... e.g., 'A healthy vegetarian dinner with spinach and quinoa'"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-purple-300 resize-none"
-                rows={3}
-              />
-              <button
-                onClick={handleLLMGenerate}
-                disabled={llmLoading || !llmPrompt.trim()}
-                className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-2.5 rounded-xl font-medium hover:from-purple-600 hover:to-indigo-600 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {llmLoading ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={16} />
-                    Generate Recipe
-                  </>
-                )}
-              </button>
-
-              {llmResult && (
-                <div className="bg-purple-50 rounded-lg p-4 mt-3">
-                  <p className="text-sm text-purple-900 whitespace-pre-wrap">{llmResult}</p>
-                </div>
-              )}
-            </div>
-          )}
+          <p className="text-xs text-gray-500 mt-1">{r.description}</p>
+          <p className="text-[10px] text-gray-400 mt-1 capitalize">{r.category} • prep {r.prepTime}min • cook {r.cookTime}min</p>
+          {open === r.id && <Detail r={{ id: 'local-' + r.id, name: r.name, emoji: r.emoji, ingredients: r.ingredients, instructions: r.instructions, category: r.category, savedAt: '' }} />}
         </div>
-      )}
+      ))}
 
-      {/* Web Recipe Search */}
-      {profile.webSearchEnabled && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-blue-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <Globe size={18} className="text-blue-500" />
-              Web Recipe Search
-            </h2>
-            <button
-              onClick={() => setShowWebSearch(!showWebSearch)}
-              className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-100 transition"
-            >
-              {showWebSearch ? 'Close' : 'Search'}
-            </button>
-          </div>
-
-          {showWebSearch && (
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={webQuery}
-                  onChange={(e) => setWebQuery(e.target.value)}
-                  placeholder="Search for recipes online..."
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-300"
-                  onKeyDown={(e) => e.key === 'Enter' && handleWebSearch()}
-                />
-                <button
-                  onClick={handleWebSearch}
-                  disabled={webLoading || !webQuery.trim()}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition disabled:opacity-50"
-                >
-                  {webLoading ? '...' : 'Search'}
-                </button>
-              </div>
-
-              {webResults.length > 0 && (
-                <div className="space-y-2 mt-3">
-                  {webResults.map((result, i) => (
-                    <a
-                      key={i}
-                      href={result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
-                    >
-                      <p className="text-sm font-medium text-blue-900">{result.title}</p>
-                      <p className="text-xs text-blue-600 mt-1 line-clamp-2">{result.snippet}</p>
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              {webResults.length === 0 && !webLoading && webQuery && (
-                <p className="text-sm text-gray-400 text-center py-4">No results found. Try a different search.</p>
-              )}
+      {tab === 'web' && searching && <p className="text-center text-gray-400 text-sm py-8 animate-pulse">Searching the web…</p>}
+      {tab === 'web' && webResults !== null && webResults.length === 0 && <p className="text-center text-gray-400 text-sm py-8">No results — try another dish name! 🍳</p>}
+      {tab === 'web' && (webResults || []).map(m => (
+        <div key={m.idMeal} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3">
+            <img src={m.strMealThumb} alt={m.strMeal} className="w-14 h-14 rounded-xl object-cover" />
+            <div className="flex-1">
+              <p className="font-medium text-gray-800 text-sm">{m.strMeal}</p>
+              <p className="text-[10px] text-gray-400 capitalize">{m.strCategory} • {m.strArea}</p>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Recipe Detail Modal */}
-      {selectedRecipe && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setSelectedRecipe(null)}>
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white p-4 border-b border-gray-100 flex items-center justify-between rounded-t-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{selectedRecipe.emoji}</span>
-                <h2 className="text-lg font-bold text-gray-800">{selectedRecipe.name}</h2>
-              </div>
-              <button onClick={() => setSelectedRecipe(null)} className="p-2 hover:bg-gray-100 rounded-full">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-5">
-              <p className="text-gray-600">{selectedRecipe.description}</p>
-
-              {/* Meta */}
-              <div className="flex gap-4 text-sm">
-                <div className="flex items-center gap-1 text-gray-500">
-                  <Clock size={14} /> Prep: {selectedRecipe.prepTime}min
-                </div>
-                <div className="flex items-center gap-1 text-gray-500">
-                  <Clock size={14} /> Cook: {selectedRecipe.cookTime}min
-                </div>
-                <div className="flex items-center gap-1 text-gray-500">
-                  <Users size={14} /> Serves: {selectedRecipe.servings}
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="flex gap-2 flex-wrap">
-                {selectedRecipe.tags.map(tag => (
-                  <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-
-              {/* Ingredients */}
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2">🥘 Ingredients</h3>
-                <ul className="space-y-1.5">
-                  {selectedRecipe.ingredients.map((ing, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="w-1.5 h-1.5 bg-orange-300 rounded-full" />
-                      {ing}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Instructions */}
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2">📝 Instructions</h3>
-                <ol className="space-y-3">
-                  {selectedRecipe.instructions.map((inst, i) => (
-                    <li key={i} className="flex gap-3 text-sm text-gray-600">
-                      <span className="flex-shrink-0 w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold">
-                        {i + 1}
-                      </span>
-                      <span className="pt-0.5">{inst}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+            <div className="flex gap-2">
+              <button title="Save to My Box" onClick={() => saveWeb(m)} className={inBox('web-' + m.idMeal) ? 'text-emerald-500' : 'text-gray-300 hover:text-teal-500'}>{inBox('web-' + m.idMeal) ? <Check size={16} /> : <Plus size={16} />}</button>
+              <button onClick={() => setOpen(open === m.idMeal ? null : m.idMeal)} className="text-gray-400">{open === m.idMeal ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
             </div>
           </div>
         </div>
-      )}
+      ))}
+
+      {tab === 'box' && box.length === 0 && <p className="text-center text-gray-400 text-sm py-8">Your recipe box is empty — tap the + on any recipe to save it here! 📦</p>}
+      {tab === 'box' && box.map(r => (
+        <div key={r.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-gray-800 text-sm">{r.emoji} {r.name}</p>
+            <div className="flex gap-2">
+              <button onClick={() => setOpen(open === r.id ? null : r.id)} className="text-gray-400">{open === r.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
+              <button onClick={() => persistBox(box.filter(b => b.id !== r.id))} className="text-gray-300 hover:text-red-400"><Trash2 size={16} /></button>
+            </div>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1 capitalize">saved {new Date(r.savedAt).toLocaleDateString()} • {r.category}</p>
+          {open === r.id && <Detail r={r} />}
+        </div>
+      ))}
     </div>
   );
 }

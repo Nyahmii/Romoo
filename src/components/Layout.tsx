@@ -40,11 +40,11 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
+      <main className="max-w-4xl mx-auto px-4 py-6 pb-32">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-amber-100 z-50">
+      <nav style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-amber-100 z-50">
         <div className="max-w-4xl mx-auto px-2 py-2 flex justify-around overflow-x-auto">
           {navItems.map(({ page, label, icon: Icon }) => (
             <button
