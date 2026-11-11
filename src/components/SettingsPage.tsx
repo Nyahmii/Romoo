@@ -1,3 +1,4 @@
+import UpdateChecker from './UpdateChecker';
 import { useState } from 'react';
 import { UserProfile, DailyCheckIn, SleepLog, Goal, Hobby, Movement } from '../types';
 import { Settings as SettingsIcon, User, Download, Upload, Trash2, AlertTriangle, Lock, Sparkles } from 'lucide-react';
@@ -418,6 +419,6 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
           </p>
         </div>
       </div>
-    </div>
+    <div className="mt-6"><UpdateChecker /></div></div>
   );
 }

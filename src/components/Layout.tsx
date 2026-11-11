@@ -1,4 +1,6 @@
-import { ReactNode } from 'react';
+import { syncWidget } from '../services/widgetSync';
+import UpdateBanner from './UpdateBanner';
+import { ReactNode, useEffect } from 'react';
 import { Page } from '../types';
 import { Home, Target, ChefHat, Clock, Settings, Pill, ListTree, BarChart3 } from 'lucide-react';
 
@@ -21,8 +23,10 @@ const navItems: { page: Page; label: string; icon: typeof Home }[] = [
 ];
 
 export default function Layout({ children, currentPage, setCurrentPage, profileName }: LayoutProps) {
+  useEffect(() => { syncWidget(); }, [currentPage]);
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-teal-50">
+      <UpdateBanner />
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-amber-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
