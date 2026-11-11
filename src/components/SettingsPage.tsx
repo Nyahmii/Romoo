@@ -409,7 +409,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
         <div className="text-center">
           <span className="text-4xl">🦦</span>
-          <h3 className="font-bold text-amber-900 mt-2">ROMO v2.0</h3>
+          <h3 className="font-bold text-amber-900 mt-2">ROMO v1.0</h3>
           <p className="text-sm text-amber-700 mt-1">Your Wellness Companion</p>
           <p className="text-xs text-amber-500 mt-2">
             Built with love • Data stored locally on your device

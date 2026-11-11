@@ -1,6 +1,5 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
-type Freq = 'daily' | 'weekly' | 'biweekly' | 'monthly';
 const pad = (n: number) => String(n).padStart(2, '0');
 const fmt = (d: Date) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const parse = (s: string) => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };

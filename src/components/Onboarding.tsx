@@ -96,7 +96,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-4">
-          ROMO v2.0 — Your Wellness Companion
+          ROMO v1.0 — Your Wellness Companion
         </p>
       </div>
     </div>
