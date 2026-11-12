@@ -1,6 +1,28 @@
 # 🦦 ROMO — Your Wellness Companion
 
-A cute otter-themed wellness app: habits, sleep, movement, goals, medications, and recipes. Everything is stored **only on your device** — no accounts, no servers, no tracking.
+<p align="center">
+  <i>A cozy little otter for your habits, sleep, movement, goals, meds & meals.<br>
+  Everything lives <b>only on your device</b> — no accounts, no servers, no tracking, no AI. 💛</i>
+</p>
+
+<p align="center">
+  🦦&nbsp;![Romo](https://img.shields.io/badge/Romo-6B4226?style=for-the-badge)&nbsp;
+  🌱&nbsp;![Local](https://img.shields.io/badge/100%25%20Local-14B8A6?style=for-the-badge)&nbsp;
+  🔒&nbsp;![Private](https://img.shields.io/badge.No%20Tracking-2C7DA0?style=for-the-badge)&nbsp;
+  🤖&nbsp;![NoAI](https://img.shields.io/badge.No%20AI-74C0E3?style=for-the-badge)&nbsp;
+  [![Release](https://img.shields.io/badge/Release-v1.10-C08552?style=for-the-badge)](https://github.com/Nyahmii/Romoo/releases)
+</p>
+
+<p align="center"><sub>🎨 the otter palette</sub></p>
+<p align="center">
+  🟤&nbsp;![Cocoa](https://img.shields.io/badge/Cocoa-6B4226?style=flat-square)&nbsp;
+  🟠&nbsp;![Sand](https://img.shields.io/badge/Sand-C08552?style=flat-square)&nbsp;
+  🔵&nbsp;![Ocean](https://img.shields.io/badge/Ocean-2C7DA0?style=flat-square)&nbsp;
+  🩵&nbsp;![Sky](https://img.shields.io/badge/Sky-74C0E3?style=flat-square)&nbsp;
+  🟢&nbsp;![Teal](https://img.shields.io/badge/Teal-14B8A6?style=flat-square)
+</p>
+
+<p align="center">🐾 ─ 🦦 ─ 🐾</p>
 
 ---
 
@@ -8,52 +30,54 @@ A cute otter-themed wellness app: habits, sleep, movement, goals, medications, a
 
 > Your wellness otter, in action — habits, meds, meals & stats, all on-device.
 
----
-
 <table>
   <tr>
-    <td align="center"><kbd>📊 Year-at-a-Glance Stats</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="240" alt="Stats scoreboard"></td>
-    <td align="center"><kbd>🔒 Profile &amp; Security</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134614_ROMO.jpg" width="240" alt="Settings profile"></td>
-    <td align="center"><kbd>💾 Backup &amp; Danger Zone</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134630_ROMO.jpg" width="240" alt="Data management"></td>
+    <td align="center"><h4>📊 Year-at-a-Glance Stats</h4><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="260" alt="Stats scoreboard"></td>
+    <td align="center"><h4>🔒 Profile &amp; Security</h4><img src="docs/screenshots/Screenshot_20261112_134614_ROMO.jpg" width="260" alt="Settings profile"></td>
+    <td align="center"><h4>💾 Backup &amp; Danger Zone</h4><img src="docs/screenshots/Screenshot_20261112_134630_ROMO.jpg" width="260" alt="Data management"></td>
   </tr>
   <tr>
-    <td align="center"><kbd>🔄 In-App Updates</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134633_ROMO.jpg" width="240" alt="App updates"></td>
-    <td align="center"><kbd>🛹 Trick Flow Tree</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134608_ROMO.jpg" width="240" alt="Trick library"></td>
-    <td align="center"><kbd>💊 Medication Tracking</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134523_ROMO.jpg" width="240" alt="Medication Tracking"></td>
+    <td align="center"><h4>🔄 In-App Updates</h4><img src="docs/screenshots/Screenshot_20261112_134633_ROMO.jpg" width="260" alt="App updates"></td>
+    <td align="center"><h4>🛹 Trick Flow Tree</h4><img src="docs/screenshots/Screenshot_20261112_134608_ROMO.jpg" width="260" alt="Trick library"></td>
+    <td align="center"><h4>💊 Medication Tracking</h4><img src="docs/screenshots/Screenshot_20261112_134523_ROMO.jpg" width="260" alt="Medication Tracking"></td>
   </tr>
 </table>
 
+<p align="center">🐾 ─ 🦦 ─ 🐾</p>
+
+---
+
 ## 📥 Download the App (Android)
 
-**Get the APK here → [ROMO Releases](https://github.com/Nyahmii/Romoo/releases)**
+**Get the APK here → [ROMO Releases](https://github.com/Nyahmii/Romoo/releases)** 🦶
 
 1. Open the link above and click the **newest release** (top of the list).
 2. Under **Assets**, tap **`app-release.apk`** to download it.
 3. Open the downloaded file on your phone and install it (allow "install from unknown sources" if asked).
 
 ### 🔄 Updating the app (over-the-air)
-You don't need to download a new APK every time:
+No need to re-download every time — Romo updates itself:
 
 1. Open Romo.
 2. Go to **Settings** (bottom-right tab).
 3. **Scroll down** to the bottom of the page.
 4. Tap **Check for updates**.
-5. If an update is available, tap **Update** → your browser downloads it → tap **Install**.
+5. If an update is ready, tap **Update** → your browser downloads it → tap **Install**.
 
-Your data (check-ins, meds, recipes, goals) stays safe during updates.
+Your check-ins, meds, recipes & goals stay safe through every update. 💛
 
 ---
 
 ## ✨ What Romo Does
 
-- **Daily check-ins** — mood, energy, gratitude, notes
-- **Sleep tracker** — including interrupted/multi-block nights
-- **Movement tracker** — walks, yoga, dance, stretching
-- **Goals** — a simple board (Active / On Hold / Done) with nested tasks
-- **Medications** — daily, every-X-days, weekly, bi-weekly, or monthly schedules, with reminders and refill alerts
-- **Recipes** — search open recipe sources, filter by diet (vegan, vegetarian, gluten-free, dairy-free, nut-free, egg-free), or import any recipe link ad-free into your personal Recipe Box
-- **Stats** — charts for mood, sleep, movement, and medication adherence
-- **Privacy** — optional PIN lock, JSON backup export/import
+- 🌤️ **Daily check-ins** — mood, energy, gratitude & little notes
+- 😴 **Sleep tracker** — including interrupted / multi-block nights
+- 🏃 **Movement tracker** — walks, yoga, dance, stretching
+- 🎯 **Goals** — a tidy board (Active / On Hold / Done) with nested tasks
+- 💊 **Medications** — daily, every‑X‑days, weekly, bi‑weekly or monthly schedules, with reminders & refill alerts
+- 🍽️ **Recipes** — search open sources, filter by diet (🌱 vegan · 🥦 vegetarian · 🌾 gluten‑free · 🥛 dairy‑free · 🥜 nut‑free · 🥚 egg‑free), or import any recipe link ad‑free into your personal Recipe Box
+- 📈 **Stats** — charts for mood, sleep, movement & med adherence
+- 🔐 **Privacy** — optional PIN lock + JSON backup export/import
 
 ---
 
@@ -69,13 +93,13 @@ npm run build
 npx cap sync android
 ```
 
-**Debug APK (testing):**
+**Debug APK (testing only):**
 ```bash
 cd android && ./gradlew assembleDebug
 # → android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-**Signed release APK (needed for updates):** keep your keystore *outside* the repo and point Gradle at it with environment variables (`ROMOO_STORE_FILE`, `ROMOO_KEY_ALIAS`, `ROMOO_STORE_PASSWORD`, `ROMOO_KEY_PASSWORD`), then:
+**Signed release APK (needed for OTA updates):** keep your keystore *outside* the repo and point Gradle at it with environment variables (`ROMOO_STORE_FILE`, `ROMOO_KEY_ALIAS`, `ROMOO_STORE_PASSWORD`, `ROMOO_KEY_PASSWORD`), then:
 ```bash
 cd android && ./gradlew assembleRelease
 # → android/app/build/outputs/apk/release/app-release.apk
@@ -95,13 +119,18 @@ npm run build    # production build
 
 ## 🤝 Contributing
 
-Fork → branch → commit → pull request. Ideas welcome: more diet tags, dark mode, CSV export, more affirmations.
+Fork → branch → commit → pull request. Ideas welcome: more diet tags, dark mode, CSV export, more affirmations. 🐾
 
 ## 📝 License
 
 MIT — see [LICENSE](./LICENSE).
 
+---
 
+## 🦦 About Romo
+Romo is more than an app — it's your friendly otter on your wellness journey: habits, goals, meds, meals, and stats, all kept privately on your device.
+
+**Progress, not perfection. You're doing amazing!** 💛
 ## 🦦 About Romo
 Romo is more than an app - it's your friendly otter on your wellness journey: habits, goals, meds, meals, and stats, all kept privately on your device.
 
