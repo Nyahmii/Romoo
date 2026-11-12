@@ -4,6 +4,21 @@ A cute otter-themed wellness app: habits, sleep, movement, goals, medications, a
 
 ---
 
+<h3>📸 Screenshots</h3>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/stats.png" width="220" alt="Stats scoreboard"><br><sub>Year-at-a-glance Stats</sub></td>
+    <td align="center"><img src="docs/screenshots/settings-1.png" width="220" alt="Settings profile"><br><sub>Profile &amp; Security</sub></td>
+    <td align="center"><img src="docs/screenshots/settings-2.png" width="220" alt="Data management"><br><sub>Backup &amp; Danger Zone</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/settings-3.png" width="220" alt="App updates"><br><sub>In-app updates</sub></td>
+    <td align="center"><img src="docs/screenshots/tricks.png" width="220" alt="Trick library"><br><sub>Trick Flow Tree</sub></td>
+    <td></td>
+  </tr>
+</table>
+
 ## 📥 Download the App (Android)
 
 **Get the APK here → [ROMO Releases](https://github.com/Nyahmii/Romoo/releases)**
