@@ -22,7 +22,8 @@
   🟢 <img src="https://img.shields.io/badge/Teal-14B8A6?style=flat-square" alt="Teal">
 </p>
 
-<p align="center">🐾 ─  ─ </p>
+<p align="center">🐾-🦦-🐾 </p>
+
 ---
 
 ### 📸 A Peek at Romo 🦦
