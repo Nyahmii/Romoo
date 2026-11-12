@@ -18,9 +18,11 @@
   🟤 <img src="https://img.shields.io/badge/Cocoa-6B4226?style=flat-square" alt="Cocoa">
   🟠 <img src="https://img.shields.io/badge/Sand-C08552?style=flat-square" alt="Sand">
   🔵 <img src="https://img.shields.io/badge/Ocean-2C7DA0?style=flat-square" alt="Ocean">
-  🩵 <img src="https://img.shields.io/badge/Sky-74C0E3?style=flat-square"
-<p align="center">🐾 ─ 🦦 ─ 🐾</p>
+  🩵 <img src="https://img.shields.io/badge/Sky-74C0E3?style=flat-square" alt="Sky">
+  🟢 <img src="https://img.shields.io/badge/Teal-14B8A6?style=flat-square" alt="Teal">
+</p>
 
+<p align="center">🐾 ─  ─ </p>
 ---
 
 ### 📸 A Peek at Romo 🦦
