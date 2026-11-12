@@ -10,7 +10,6 @@
   🌱 <img src="https://img.shields.io/badge/100%25_Local-14B8A6?style=for-the-badge" alt="100% Local">
   🔒 <img src="https://img.shields.io/badge/No_Tracking-2C7DA0?style=for-the-badge" alt="No Tracking">
   🤖 <img src="https://img.shields.io/badge/No_AI-74C0E3?style=for-the-badge" alt="No AI">
-  <a href="https://github.com/Nyahmii/Romoo/releases"><img src="https://img.shields.io/badge/Release-v1.10-C08552?style=for-the-badge" alt="Release v1.10"></a>
 </p>
 
 <p align="center"><sub>🎨 the otter palette</sub></p>
