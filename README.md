@@ -8,13 +8,13 @@ A cute otter-themed wellness app: habits, sleep, movement, goals, medications, a
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="220" alt="Stats scoreboard"><br><sub>Year-at-a-glance Stats</sub></td>
-    <td align="center"><img src="docs/screenshots/Screenshot_20261112_134614_ROMO.jpg" width="220" alt="Settings profile"><br><sub>Profile &amp; Security</sub></td>
-    <td align="center"><img src="docs/screenshots/Screenshot_20261112_134630_ROMO.jpg" width="220" alt="Data management"><br><sub>Backup &amp; Danger Zone</sub></td>
+    <td align="center"><sub>Year-at-a-glance Stats</sub><br><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="220" alt="Stats scoreboard"></td>
+    <td align="center"><sub>Profile &amp; Security</sub><br><img src="docs/screenshots/Screenshot_20261112_134614_ROMO.jpg" width="220" alt="Settings profile"></td>
+    <td align="center"><sub>Backup &amp; Danger Zone</sub><br><img src="docs/screenshots/Screenshot_20261112_134630_ROMO.jpg" width="220" alt="Data management"></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/Screenshot_20261112_134633_ROMO.jpg" width="220" alt="App updates"><br><sub>In-app updates</sub></td>
-    <td align="center"><img src="docs/screenshots/Screenshot_20261112_134608_ROMO.jpg" width="220" alt="Trick library"><br><sub>Trick Flow Tree</sub></td>
+    <td align="center"><sub>In-app updates</sub><br><img src="docs/screenshots/Screenshot_20261112_134633_ROMO.jpg" width="220" alt="App updates"></td>
+    <td align="center"><sub>Trick Flow Tree</sub><br><img src="docs/screenshots/Screenshot_20261112_134608_ROMO.jpg" width="220" alt="Trick library"></td>
     <td></td>
   </tr>
 </table>
