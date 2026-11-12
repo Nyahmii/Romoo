@@ -8,7 +8,7 @@ A cute otter-themed wellness app: habits, sleep, movement, goals, medications, a
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/stats.png" width="220" alt="Stats scoreboard"><br><sub>Year-at-a-glance Stats</sub></td>
+    <td align="center"><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="220" alt="Stats scoreboard"><br><sub>Year-at-a-glance Stats</sub></td>
     <td align="center"><img src="docs/screenshots/settings-1.png" width="220" alt="Settings profile"><br><sub>Profile &amp; Security</sub></td>
     <td align="center"><img src="docs/screenshots/settings-2.png" width="220" alt="Data management"><br><sub>Backup &amp; Danger Zone</sub></td>
   </tr>
