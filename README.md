@@ -4,18 +4,22 @@ A cute otter-themed wellness app: habits, sleep, movement, goals, medications, a
 
 ---
 
-<h3>📸 Screenshots</h3>
+### 📸 A Peek at Romo 🦦
+
+> Your wellness otter, in action — habits, meds, meals & stats, all on-device.
+
+---
 
 <table>
   <tr>
-    <td align="center"><sub>Year-at-a-glance Stats</sub><br><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="220" alt="Stats scoreboard"></td>
-    <td align="center"><sub>Profile &amp; Security</sub><br><img src="docs/screenshots/Screenshot_20261112_134614_ROMO.jpg" width="220" alt="Settings profile"></td>
-    <td align="center"><sub>Backup &amp; Danger Zone</sub><br><img src="docs/screenshots/Screenshot_20261112_134630_ROMO.jpg" width="220" alt="Data management"></td>
+    <td align="center"><kbd>📊 Year-at-a-Glance Stats</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134559_ROMO.jpg" width="240" alt="Stats scoreboard"></td>
+    <td align="center"><kbd>🔒 Profile &amp; Security</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134614_ROMO.jpg" width="240" alt="Settings profile"></td>
+    <td align="center"><kbd>💾 Backup &amp; Danger Zone</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134630_ROMO.jpg" width="240" alt="Data management"></td>
   </tr>
   <tr>
-    <td align="center"><sub>In-app updates</sub><br><img src="docs/screenshots/Screenshot_20261112_134633_ROMO.jpg" width="220" alt="App updates"></td>
-    <td align="center"><sub>Trick Flow Tree</sub><br><img src="docs/screenshots/Screenshot_20261112_134608_ROMO.jpg" width="220" alt="Trick library"></td>
-    <td></td>
+    <td align="center"><kbd>🔄 In-App Updates</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134633_ROMO.jpg" width="240" alt="App updates"></td>
+    <td align="center"><kbd>🛹 Trick Flow Tree</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134608_ROMO.jpg" width="240" alt="Trick library"></td>
+    <td align="center"><kbd>💊 Medication Tracking</kbd><br><br><img src="docs/screenshots/Screenshot_20261112_134523_ROMO.jpg" width="240" alt="Medication Tracking"></td>
   </tr>
 </table>
 
