@@ -5,25 +5,6 @@
   Everything lives <b>only on your device</b> — no accounts, no servers, no tracking, no AI. 💛</i>
 </p>
 
-<p align="center">
-  🦦&nbsp;![Romo](https://img.shields.io/badge/Romo-6B4226?style=for-the-badge)&nbsp;
-  🌱&nbsp;![Local](https://img.shields.io/badge/100%25%20Local-14B8A6?style=for-the-badge)&nbsp;
-  🔒&nbsp;![Private](https://img.shields.io/badge.No%20Tracking-2C7DA0?style=for-the-badge)&nbsp;
-  🤖&nbsp;![NoAI](https://img.shields.io/badge.No%20AI-74C0E3?style=for-the-badge)&nbsp;
-  [![Release](https://img.shields.io/badge/Release-v1.10-C08552?style=for-the-badge)](https://github.com/Nyahmii/Romoo/releases)
-</p>
-
-<p align="center"><sub>🎨 the otter palette</sub></p>
-<p align="center">
-  🟤&nbsp;![Cocoa](https://img.shields.io/badge/Cocoa-6B4226?style=flat-square)&nbsp;
-  🟠&nbsp;![Sand](https://img.shields.io/badge/Sand-C08552?style=flat-square)&nbsp;
-  🔵&nbsp;![Ocean](https://img.shields.io/badge/Ocean-2C7DA0?style=flat-square)&nbsp;
-  🩵&nbsp;![Sky](https://img.shields.io/badge/Sky-74C0E3?style=flat-square)&nbsp;
-  🟢&nbsp;![Teal](https://img.shields.io/badge/Teal-14B8A6?style=flat-square)
-</p>
-
-<p align="center">🐾 ─ 🦦 ─ 🐾</p>
-
 ---
 
 ### 📸 A Peek at Romo 🦦
