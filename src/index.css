@@ -91,7 +91,7 @@
   --romo-safe-right: env(safe-area-inset-right, 0px);
   --romo-safe-bottom: env(safe-area-inset-bottom, 0px);
   --romo-safe-left: env(safe-area-inset-left, 0px);
-  --romo-status-bg: #fffbeb;
+  --romo-status-bg: #fef3c7;
 }
 
 html,

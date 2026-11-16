@@ -115,7 +115,24 @@ ${message}`);
     reader.readAsText(file);
   };
   const handleResetAll = () => {
-    setCheckIns([]); setSleepLogs([]); setGoals([]); setHobbies([]); setMovements([]); setShowResetConfirm(false);
+    const romoKeys: string[] = [];
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+
+      if (key?.startsWith('romo-')) {
+        romoKeys.push(key);
+      }
+    }
+
+    for (const key of romoKeys) {
+      localStorage.removeItem(key);
+    }
+
+    setShowResetConfirm(false);
+
+    alert('All ROMO data has been deleted. The app will now restart.');
+    window.location.reload();
   };
 
   return (
@@ -220,7 +237,7 @@ ${message}`);
         <h2 className="font-semibold text-red-600 flex items-center gap-2 mb-4"><AlertTriangle size={18} /> Danger Zone</h2>
         {showResetConfirm ? (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600">Are you sure you want to delete ALL data? This cannot be undone!</p>
+            <p className="text-sm text-gray-600">This will permanently delete your profile, medications, medication history, check-ins, sleep logs, goals, tricks, recipes, activity data, preferences, and other local ROMO data. Export a backup first if you may want to restore it.</p>
             <div className="flex gap-2">
               <button onClick={handleResetAll} className="flex-1 bg-red-500 text-white py-2 rounded-xl text-sm font-medium hover:bg-red-600 transition">Yes, Delete Everything</button>
               <button onClick={() => setShowResetConfirm(false)} className="flex-1 border border-gray-200 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">Cancel</button>

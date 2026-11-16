@@ -1,6 +1,6 @@
 import { Browser } from '@capacitor/browser';
 
-export const APP_VERSION = '1.10.3';
+export const APP_VERSION = '1.10.4';
 
 const REPO = 'Nyahmii/Romoo';
 const API_ROOT = ['https:', '', 'api.github.com'].join('/');

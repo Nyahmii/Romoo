@@ -41,7 +41,7 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
     >
       <div
         aria-hidden="true"
-        className="fixed top-0 left-0 right-0 z-[70] bg-amber-50"
+        className="fixed top-0 left-0 right-0 z-[70] bg-amber-100"
         style={{ height: 'var(--romo-safe-top)' }}
       />
       <UpdateBanner />
