@@ -17,12 +17,18 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
     { page: 'dashboard', label: 'Home', icon: Home },
     { page: 'meds', label: 'Meds', icon: Pill },
     { page: 'goals', label: 'Goals', icon: Target },
-    ...(showRecipes ? [{ page: 'recipes', label: 'Recipes', icon: ChefHat }] : []),
+  ];
+
+  if (showRecipes) {
+    navItems.push({ page: 'recipes', label: 'Recipes', icon: ChefHat });
+  }
+
+  navItems.push(
     { page: 'history', label: 'History', icon: Clock },
     { page: 'stats', label: 'Stats', icon: BarChart3 },
     { page: 'tricks', label: 'Tricks', icon: ListTree },
     { page: 'settings', label: 'Settings', icon: Settings },
-  ];
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-teal-50">

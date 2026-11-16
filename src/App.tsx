@@ -72,7 +72,7 @@ export default function App() {
           />
         );
       case 'goals':
-        return <GoalsPage goals={goals} setGoals={setGoals} />;
+        return <GoalsPage />;
       case 'recipes':
         return <RecipesPage profile={profile} />;
       case 'history':
