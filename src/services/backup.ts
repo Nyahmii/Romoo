@@ -1,4 +1,6 @@
+import { Capacitor } from '@capacitor/core';
 import { APP_VERSION } from './updater';
+import { saveTextFile } from './nativeFileSaver';
 
 export const BACKUP_SCHEMA_VERSION = 1;
 export const ROMO_STORAGE_PREFIX = 'romo-';
@@ -58,13 +60,19 @@ export function createBackup(): RomoBackup {
   };
 }
 
-export function downloadBackup(
+export async function downloadBackup(
   backup: RomoBackup = createBackup(),
   label = 'backup',
-): void {
+): Promise<void> {
   const date = backup.createdAt.slice(0, 10);
   const filename = `romo-${label}-${date}.txt`;
   const content = JSON.stringify(backup, null, 2);
+
+  if (Capacitor.isNativePlatform()) {
+    await saveTextFile(filename, content);
+    return;
+  }
+
   const blob = new Blob([content], {
     type: 'text/plain;charset=utf-8',
   });

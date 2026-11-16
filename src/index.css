@@ -85,12 +85,13 @@
 }
 
 /* ROMO native safe-area handling.
-   Keeps interactive content clear of Android and iOS system bars. */
+   Android 15+ uses edge-to-edge system bars. */
 :root {
   --romo-safe-top: env(safe-area-inset-top, 0px);
   --romo-safe-right: env(safe-area-inset-right, 0px);
   --romo-safe-bottom: env(safe-area-inset-bottom, 0px);
   --romo-safe-left: env(safe-area-inset-left, 0px);
+  --romo-status-bg: #fffbeb;
 }
 
 html,
@@ -101,13 +102,10 @@ body,
 
 body {
   margin: 0;
+  background: var(--romo-status-bg);
 }
 
 #root {
   box-sizing: border-box;
   min-height: 100dvh;
-  padding-top: var(--romo-safe-top);
-  padding-right: var(--romo-safe-right);
-  padding-bottom: var(--romo-safe-bottom);
-  padding-left: var(--romo-safe-left);
 }
