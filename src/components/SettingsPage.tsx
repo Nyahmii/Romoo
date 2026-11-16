@@ -44,12 +44,17 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
     setShowPinSetup(false); setNewPin(''); setConfirmPin(''); setPinError('');
   };
   const handleRemovePin = () => setProfile({ ...profile, pin: undefined });
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
-      downloadBackup(createBackup());
+      await downloadBackup(createBackup());
       setExportSuccess(true);
       window.setTimeout(() => setExportSuccess(false), 3000);
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error);
+
+      if (message.toLowerCase().includes('cancel')) return;
+
       console.error('ROMO backup failed:', error);
       alert('ROMO could not create the backup file.');
     }
@@ -63,7 +68,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
 
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const text = String(event.target?.result ?? '');
         const backup = parseBackup(text);
@@ -88,7 +93,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
 
         if (!confirmed) return;
 
-        downloadBackup(createBackup(), 'pre-restore-safety');
+        await downloadBackup(createBackup(), 'pre-restore-safety');
         restoreBackup(backup);
 
         alert('ROMO data restored successfully. The app will now reload. 🎉');
@@ -196,7 +201,7 @@ ${message}`);
             <Download size={18} className="text-teal-500" />
             <div>
               <p className="font-medium text-gray-800 text-sm">Export Data</p>
-              <p className="text-xs text-gray-400">Back up all ROMO data to a readable text file</p>
+              <p className="text-xs text-gray-400">Choose where to save a complete ROMO text backup</p>
             </div>
           </button>
           {exportSuccess && <div className="bg-green-50 text-green-700 text-sm px-4 py-2 rounded-lg">✅ Data exported successfully!</div>}
