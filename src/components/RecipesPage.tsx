@@ -83,8 +83,9 @@ async function fetchDJ(): Promise<UniMeal[]> {
   try {
     const r = await fetch('https://dummyjson.com/recipes?limit=0');
     const j = await r.json();
-    djCache = (j.recipes || []).map((r: any) => ({ src: 'dj' as const, id: 'dj-' + r.id, name: r.name, image: r.image || '', ingredients: (r.ingredients || []).map(String), instructions: (r.instructions || []).map(String), category: (r.tags && r.tags[0]) || '', area: r.cuisine || '', tags: r.tags || [] }));
-    return djCache;
+    const recipes: UniMeal[] = (j.recipes || []).map((r: any) => ({ src: 'dj' as const, id: 'dj-' + r.id, name: r.name, image: r.image || '', ingredients: (r.ingredients || []).map(String), instructions: (r.instructions || []).map(String), category: (r.tags && r.tags[0]) || '', area: r.cuisine || '', tags: r.tags || [] }));
+    djCache = recipes;
+    return recipes;
   } catch { return []; }
 }
 async function fetchTMDBase(query: string, selCat: string, selArea: string, selIng: string): Promise<UniMeal[]> {

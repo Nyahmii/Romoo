@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import GoalTree, { GoalNode } from './GoalTree';
 
 function collectKnown(nodes: GoalNode[], path: string[]): { title: string; path: string[] }[] {
-  let out: { title: string; path: string[] } = [];
+  let out: { title: string; path: string[] }[] = [];
   (nodes || []).forEach(n => {
     if (!n.children.length && n.status === 'known') out.push({ title: n.title, path });
     out = out.concat(collectKnown(n.children, [...path, n.title]));

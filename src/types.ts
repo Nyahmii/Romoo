@@ -8,6 +8,12 @@ export interface DailyCheckIn {
   createdAt: string;
 }
 
+export interface SleepSegment {
+  id: string;
+  start: string;
+  end: string;
+}
+
 export interface SleepLog {
   id: string;
   date: string;
@@ -15,6 +21,8 @@ export interface SleepLog {
   wakeTime: string;
   quality: number; // 1-5
   notes: string;
+  segments?: SleepSegment[];
+  totalHours?: number;
 }
 
 export interface Goal {
