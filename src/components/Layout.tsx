@@ -32,7 +32,7 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-teal-50"
+      className="romo-app min-h-screen"
       style={{
         paddingTop: 'var(--romo-safe-top)',
         paddingLeft: 'var(--romo-safe-left)',
@@ -41,11 +41,11 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
     >
       <div
         aria-hidden="true"
-        className="fixed top-0 left-0 right-0 z-[70] bg-amber-100"
+        className="romo-status-scrim fixed top-0 left-0 right-0 z-[70]"
         style={{ height: 'var(--romo-safe-top)' }}
       />
       <UpdateBanner />
-      <header className="bg-white border-b border-amber-100 sticky top-0 z-50">
+      <header className="romo-header border-b border-amber-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🦦</span>
@@ -62,7 +62,7 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
         {children}
       </main>
 
-      <nav style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-amber-100 z-50">
+      <nav style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} className="romo-nav fixed bottom-0 left-0 right-0 border-t border-amber-100 z-50">
         <div className="max-w-4xl mx-auto px-2 py-2 flex justify-around overflow-x-auto">
           {navItems.map(({ page, label, icon: Icon }) => (
             <button

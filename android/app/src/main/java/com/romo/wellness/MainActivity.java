@@ -5,8 +5,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -16,14 +14,6 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(RomoFileSaverPlugin.class);
         super.onCreate(savedInstanceState);
 
-        WindowInsetsControllerCompat controller =
-            WindowCompat.getInsetsController(
-                getWindow(),
-                getWindow().getDecorView()
-            );
-
-        controller.setAppearanceLightStatusBars(true);
-        controller.setAppearanceLightNavigationBars(true);
     }
 
     @Override

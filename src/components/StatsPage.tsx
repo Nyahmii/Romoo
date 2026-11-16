@@ -1,5 +1,21 @@
 import { useState } from 'react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  CartesianGrid,
+} from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Freq = 'daily' | 'weekly' | 'biweekly' | 'monthly';
@@ -31,7 +47,58 @@ function nodeStats(n: TreeNode): { score: number; total: number } {
 const pctOf = (n: TreeNode) => { const s = nodeStats(n); return s.total ? Math.round((100 * s.score) / s.total) : 0; };
 const countKnown = (n: TreeNode): number => (!n.children.length ? (n.status === 'known' ? 1 : 0) : n.children.reduce((a, c) => a + countKnown(c), 0));
 
+const CHART = {
+  amber: '#f59e0b',
+  rose: '#fb7185',
+  teal: '#14b8a6',
+  indigo: '#6366f1',
+  sky: '#38bdf8',
+  lavender: '#a78bfa',
+  emerald: '#34d399',
+  grid: '#e5e7eb',
+};
+
+function RomoTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="rounded-xl bg-gray-900/95 text-white px-3 py-2 shadow-xl text-xs">
+      <p className="font-semibold mb-1">
+        🦦 {label}
+      </p>
+
+      {payload.map((item: any) => (
+        <p key={item.dataKey} style={{ color: item.color }}>
+          {item.name || item.dataKey}: {item.value}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+const ChartGrid = () => (
+  <CartesianGrid
+    stroke={CHART.grid}
+    strokeDasharray="3 6"
+    vertical={false}
+    opacity={0.65}
+  />
+);
+
+function chartColor(
+  variable: '--romo-accent' | '--romo-accent-2',
+  fallback: string,
+): string {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(variable)
+    .trim();
+
+  return value || fallback;
+}
+
 export default function StatsPage() {
+  const primary = chartColor('--romo-accent', CHART.amber);
+  const secondary = chartColor('--romo-accent-2', CHART.teal);
   const now = new Date(); const nowY = now.getFullYear();
   const [year, setYear] = useState(nowY);
   const meds = load<Med[]>('romo-meds-v2', []);
@@ -82,10 +149,27 @@ export default function StatsPage() {
     return (checkIns.some(c => c.date === s) ? 1 : 0) + (movements.some(m => m.date === s) ? 1 : 0) + (dayMeds.length && dayMeds.every(m => m.times.every(t => get(m.id, s, t)?.status === 'taken')) ? 1 : 0);
   };
   const heatCls = (v: number) => (v === 0 ? 'bg-gray-100' : v === 1 ? 'bg-teal-200' : v === 2 ? 'bg-teal-400' : 'bg-teal-600');
-  const Card = ({ title, children }: any) => (<div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><p className="font-semibold text-gray-800 text-sm mb-2">{title}</p>{children}</div>);
+  const Card = ({ title, children }: any) => (
+    <div className="romo-card rounded-3xl p-4 shadow-sm border border-gray-100 overflow-hidden">
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-semibold text-gray-800 text-sm">
+          {title}
+        </p>
+        <span className="text-sm opacity-50">✨</span>
+      </div>
+      {children}
+    </div>
+  );
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-r from-teal-100 to-cyan-100 rounded-2xl p-5 border border-teal-200">
+      <div
+        className="rounded-3xl p-5 border shadow-sm"
+        style={{
+          background:
+            'linear-gradient(135deg, var(--romo-soft), var(--romo-surface))',
+          borderColor: 'var(--romo-accent)',
+        }}
+      >
         <div className="flex items-center justify-between">
           <button onClick={() => setYear(y => y - 1)} className="text-teal-600"><ChevronLeft size={20} /></button>
           <h2 className="text-lg font-semibold text-teal-800">📊 Scoreboard — {year}</h2>
@@ -108,19 +192,185 @@ export default function StatsPage() {
         <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400">less <span className="w-2.5 h-2.5 rounded-[2px] bg-gray-100 inline-block" /><span className="w-2.5 h-2.5 rounded-[2px] bg-teal-200 inline-block" /><span className="w-2.5 h-2.5 rounded-[2px] bg-teal-400 inline-block" /><span className="w-2.5 h-2.5 rounded-[2px] bg-teal-600 inline-block" /> more</div>
       </Card>
       <Card title="🎯 Check-ins: goal vs actual (per month)">
-        <div className="h-44"><ResponsiveContainer><LineChart data={goalActual}><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Legend wrapperStyle={{ fontSize: 10 }} /><Line type="monotone" dataKey="goal" name="Goal (daily check-in)" stroke="#94a3b8" strokeDasharray="6 6" dot={false} /><Line type="monotone" dataKey="actual" name="Actual" stroke="#f59e0b" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
+        <div className="h-52">
+          <ResponsiveContainer>
+            <AreaChart
+              data={goalActual}
+              margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="checkinFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={primary} stopOpacity={0.48} />
+                  <stop offset="95%" stopColor={primary} stopOpacity={0.03} />
+                </linearGradient>
+              </defs>
+              <ChartGrid />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<RomoTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 10 }} />
+              <Area
+                type="monotone"
+                dataKey="actual"
+                name="Check-ins"
+                stroke={primary}
+                strokeWidth={3}
+                fill="url(#checkinFill)"
+                activeDot={{
+                  r: 6,
+                  fill: primary,
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="goal"
+                name="Daily goal"
+                stroke="#94a3b8"
+                strokeDasharray="5 6"
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
       <Card title="💊 Medication adherence per month (%)">
-        <div className="h-44"><ResponsiveContainer><BarChart data={medMonth}><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis domain={[0, 100]} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="pct" fill="#fb7185" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
+        <div className="h-52">
+          <ResponsiveContainer>
+            <BarChart
+              data={medMonth}
+              margin={{ top: 10, right: 8, left: -20, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="medBars" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stopColor="#fb7185" />
+                  <stop offset="100%" stopColor="#fda4af" />
+                </linearGradient>
+              </defs>
+              <ChartGrid />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<RomoTooltip />} />
+              <Bar
+                dataKey="pct"
+                name="Adherence %"
+                fill="url(#medBars)"
+                radius={[12, 12, 4, 4]}
+                maxBarSize={24}
+                animationDuration={800}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
       <Card title="😴 Sleep vs 8h goal (avg hours per month)">
-        <div className="h-44"><ResponsiveContainer><LineChart data={sleepMonth}><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Legend wrapperStyle={{ fontSize: 10 }} /><Line type="monotone" dataKey="goal" name="Goal" stroke="#94a3b8" strokeDasharray="6 6" dot={false} /><Line type="monotone" dataKey="hours" name="Actual" stroke="#818cf8" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
+        <div className="h-52">
+          <ResponsiveContainer>
+            <AreaChart
+              data={sleepMonth}
+              margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="sleepFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#a78bfa" stopOpacity={0.04} />
+                </linearGradient>
+              </defs>
+              <ChartGrid />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 10]} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<RomoTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 10 }} />
+              <Area
+                type="monotone"
+                dataKey="hours"
+                name="Average sleep"
+                stroke="#6366f1"
+                strokeWidth={3}
+                fill="url(#sleepFill)"
+                activeDot={{
+                  r: 6,
+                  fill: '#6366f1',
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="goal"
+                name="8h goal"
+                stroke="#a78bfa"
+                strokeDasharray="5 6"
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
       <Card title="🏃 Movement minutes per month">
-        <div className="h-44"><ResponsiveContainer><BarChart data={moveMonth}><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="minutes" fill="#2dd4bf" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
+        <div className="h-52">
+          <ResponsiveContainer>
+            <BarChart
+              data={moveMonth}
+              margin={{ top: 10, right: 8, left: -20, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="moveBars" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stopColor={secondary} />
+                  <stop offset="100%" stopColor="#38bdf8" />
+                </linearGradient>
+              </defs>
+              <ChartGrid />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<RomoTooltip />} />
+              <Bar
+                dataKey="minutes"
+                name="Active minutes"
+                fill="url(#moveBars)"
+                radius={[12, 12, 4, 4]}
+                maxBarSize={24}
+                animationDuration={900}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
       <Card title="💪 Movement by activity type (year total)">
-        <div className="h-44"><ResponsiveContainer><BarChart data={moveByType}><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="minutes" fill="#a78bfa" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
+        <div className="h-52">
+          <ResponsiveContainer>
+            <BarChart
+              data={moveByType}
+              layout="vertical"
+              margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
+            >
+              <ChartGrid />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={54}
+                tick={{ fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip content={<RomoTooltip />} />
+              <Bar
+                dataKey="minutes"
+                name="Minutes"
+                fill="#a78bfa"
+                radius={[0, 12, 12, 0]}
+                maxBarSize={20}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
       {activeGoals.length > 0 && (
         <Card title="🌳 Active goals progress">
@@ -128,7 +378,16 @@ export default function StatsPage() {
             {activeGoals.slice(0, 6).map(g => (
               <div key={g.id}>
                 <div className="flex justify-between text-xs text-gray-600 mb-0.5"><span>{g.title}</span><span>{pctOf(g)}%</span></div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-400 rounded-full" style={{ width: pctOf(g) + '%' }} /></div>
+                <div className="h-3 bg-gray-100 rounded-full overflow-hidden p-[2px]">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: pctOf(g) + '%',
+                      background:
+                        'linear-gradient(90deg, var(--romo-accent), var(--romo-accent-2))',
+                    }}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -136,12 +395,76 @@ export default function StatsPage() {
       )}
       {trickCats.length > 0 && (
         <Card title="🎓 Learned tricks per category">
-          <div className="h-44"><ResponsiveContainer><BarChart data={trickCats}><XAxis dataKey="name" tick={{ fontSize: 10 }} /><YAxis allowDecimals={false} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="value" fill="#34d399" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
+          <div className="h-52">
+            <ResponsiveContainer>
+              <BarChart
+                data={trickCats}
+                layout="vertical"
+                margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="trickBars" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="100%" stopColor={secondary} />
+                  </linearGradient>
+                </defs>
+                <ChartGrid />
+                <XAxis
+                  type="number"
+                  allowDecimals={false}
+                  tick={{ fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={70}
+                  tick={{ fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<RomoTooltip />} />
+                <Bar
+                  dataKey="value"
+                  name="Learned"
+                  fill="url(#trickBars)"
+                  radius={[0, 12, 12, 0]}
+                  maxBarSize={20}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
       )}
       {moodCounts.length > 0 && (
         <Card title="💗 Mood distribution">
-          <div className="h-44"><ResponsiveContainer><PieChart><Pie data={moodCounts} dataKey="value" nameKey="name" outerRadius={60} label={{ fontSize: 10 }}>{moodCounts.map((m, i) => (<Cell key={i} fill={MOOD_COLORS[m.name]} />))}</Pie><Tooltip /></PieChart></ResponsiveContainer></div>
+          <div className="h-52">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={moodCounts}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={48}
+                  outerRadius={76}
+                  paddingAngle={5}
+                  cornerRadius={8}
+                  stroke="none"
+                  labelLine={false}
+                  label={({ name, value }) => `${name} ${value}`}
+                >
+                  {moodCounts.map((m, index) => (
+                    <Cell
+                      key={index}
+                      fill={MOOD_COLORS[m.name]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<RomoTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
       )}
     </div>

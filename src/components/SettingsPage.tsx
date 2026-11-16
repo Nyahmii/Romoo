@@ -6,6 +6,12 @@ import {
   restoreBackup,
 } from '../services/backup';
 import { APP_VERSION } from '../services/updater';
+import {
+  getTheme,
+  ROMO_THEMES,
+  RomoTheme,
+  saveTheme,
+} from '../services/theme';
 import { useState } from 'react';
 import { UserProfile, DailyCheckIn, SleepLog, Goal, Hobby, Movement } from '../types';
 import { Settings as SettingsIcon, User, Download, Upload, Trash2, AlertTriangle, Lock } from 'lucide-react';
@@ -29,6 +35,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [showRecipes, setShowRecipes] = useState(() => localStorage.getItem('romo-show-recipes') === 'true');
+  const [theme, setTheme] = useState<RomoTheme>(getTheme);
 
   const toggleRecipes = (val: boolean) => {
     setShowRecipes(val);
@@ -157,6 +164,51 @@ ${message}`);
         <div className="flex gap-2">
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Update your name..." className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-300" />
           <button onClick={handleSaveName} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">Save</button>
+        </div>
+      </div>
+
+      <div className="romo-card rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h2 className="font-semibold text-gray-800 mb-1">
+          🎨 ROMO Theme
+        </h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Give your ROMO a little personality.
+        </p>
+
+        <div className="grid grid-cols-2 gap-3">
+          {ROMO_THEMES.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => {
+                setTheme(option.id);
+                saveTheme(option.id);
+              }}
+              data-selected={theme === option.id}
+              className="romo-theme-option rounded-xl border border-gray-200 p-3 text-left transition active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{option.emoji}</span>
+                <span className="font-semibold text-sm">
+                  {option.name}
+                </span>
+              </div>
+
+              <p className="text-[10px] text-gray-500 mt-1">
+                {option.description}
+              </p>
+
+              <div className="flex gap-1 mt-2">
+                {option.colors.map((color) => (
+                  <span
+                    key={color}
+                    className="w-5 h-5 rounded-full border border-white shadow-sm"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 

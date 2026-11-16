@@ -8,6 +8,9 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { applyTheme, getTheme } from './services/theme';
+
+applyTheme(getTheme());
 
 if (Capacitor.isNativePlatform()) {
   Promise.allSettled([
