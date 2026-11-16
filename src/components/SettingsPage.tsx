@@ -1,4 +1,11 @@
 import UpdateChecker from './UpdateChecker';
+import {
+  createBackup,
+  downloadBackup,
+  parseBackup,
+  restoreBackup,
+} from '../services/backup';
+import { APP_VERSION } from '../services/updater';
 import { useState } from 'react';
 import { UserProfile, DailyCheckIn, SleepLog, Goal, Hobby, Movement } from '../types';
 import { Settings as SettingsIcon, User, Download, Upload, Trash2, AlertTriangle, Lock } from 'lucide-react';
@@ -38,40 +45,69 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
   };
   const handleRemovePin = () => setProfile({ ...profile, pin: undefined });
   const handleExport = () => {
-    const data = {
-      profile,
-      checkIns: JSON.parse(localStorage.getItem('romo-checkins') || '[]'),
-      sleepLogs: JSON.parse(localStorage.getItem('romo-sleep') || '[]'),
-      goals: JSON.parse(localStorage.getItem('romo-goals') || '[]'),
-      hobbies: JSON.parse(localStorage.getItem('romo-hobbies') || '[]'),
-      movements: JSON.parse(localStorage.getItem('romo-movements') || '[]'),
-      exportedAt: new Date().toISOString(),
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `romo-backup-${new Date().toISOString().split('T')[0]}.json`; a.click();
-    URL.revokeObjectURL(url);
-    setExportSuccess(true);
-    setTimeout(() => setExportSuccess(false), 3000);
+    try {
+      downloadBackup(createBackup());
+      setExportSuccess(true);
+      window.setTimeout(() => setExportSuccess(false), 3000);
+    } catch (error) {
+      console.error('ROMO backup failed:', error);
+      alert('ROMO could not create the backup file.');
+    }
   };
+
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
+
     if (!file) return;
+
     const reader = new FileReader();
+
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target?.result as string);
-        if (data.checkIns) setCheckIns(data.checkIns);
-        if (data.sleepLogs) setSleepLogs(data.sleepLogs);
-        if (data.goals) setGoals(data.goals);
-        if (data.hobbies) setHobbies(data.hobbies);
-        if (data.movements) setMovements(data.movements);
-        if (data.profile) setProfile(data.profile);
-        alert('Data imported successfully! 🎉');
-      } catch { alert('Error importing data. Please check the file format.'); }
+        const text = String(event.target?.result ?? '');
+        const backup = parseBackup(text);
+        const backupDate = new Date(backup.createdAt);
+        const readableDate = Number.isNaN(backupDate.getTime())
+          ? backup.createdAt
+          : backupDate.toLocaleString();
+
+        const confirmed = window.confirm(
+          `Restore this ROMO backup?
+
+` +
+          `Created: ${readableDate}
+` +
+          `App version: ${backup.appVersion}
+` +
+          `Items: ${Object.keys(backup.storage).length}
+
+` +
+          `Your current ROMO data will be downloaded as a safety backup first.`,
+        );
+
+        if (!confirmed) return;
+
+        downloadBackup(createBackup(), 'pre-restore-safety');
+        restoreBackup(backup);
+
+        alert('ROMO data restored successfully. The app will now reload. 🎉');
+        window.location.reload();
+      } catch (error) {
+        console.error('ROMO restore failed:', error);
+        const message =
+          error instanceof Error ? error.message : 'Unknown restore error';
+        alert(`ROMO could not restore this file.
+
+${message}`);
+      }
     };
-    reader.readAsText(file as Blob);
+
+    reader.onerror = () => {
+      alert('ROMO could not read the selected backup file.');
+    };
+
+    reader.readAsText(file);
   };
   const handleResetAll = () => {
     setCheckIns([]); setSleepLogs([]); setGoals([]); setHobbies([]); setMovements([]); setShowResetConfirm(false);
@@ -151,13 +187,16 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4"><Download size={18} className="text-teal-500" /> Data Management</h2>
+        <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-2"><Download size={18} className="text-teal-500" /> Data Management</h2>
+        <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-2 mb-4">
+          Backups contain your complete local ROMO data, including profile and PIN settings. Store them privately.
+        </p>
         <div className="space-y-3">
           <button onClick={handleExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition text-left">
             <Download size={18} className="text-teal-500" />
             <div>
               <p className="font-medium text-gray-800 text-sm">Export Data</p>
-              <p className="text-xs text-gray-400">Download all your data as a JSON file</p>
+              <p className="text-xs text-gray-400">Back up all ROMO data to a readable text file</p>
             </div>
           </button>
           {exportSuccess && <div className="bg-green-50 text-green-700 text-sm px-4 py-2 rounded-lg">✅ Data exported successfully!</div>}
@@ -165,9 +204,9 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
             <Upload size={18} className="text-blue-500" />
             <div>
               <p className="font-medium text-gray-800 text-sm">Import Data</p>
-              <p className="text-xs text-gray-400">Restore from a previous backup</p>
+              <p className="text-xs text-gray-400">Restore all ROMO data from a .txt or legacy .json backup</p>
             </div>
-            <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+            <input type="file" accept=".txt,.json,application/json,text/plain" onChange={handleImport} className="hidden" />
           </label>
         </div>
       </div>
@@ -196,7 +235,7 @@ export default function SettingsPage({ profile, setProfile, setCheckIns, setSlee
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
         <div className="text-center">
           <span className="text-4xl">🦦</span>
-          <h3 className="font-bold text-amber-900 mt-2">ROMO v1.5</h3>
+          <h3 className="font-bold text-amber-900 mt-2">ROMO v{APP_VERSION}</h3>
           <p className="text-sm text-amber-700 mt-1">Your Wellness Companion</p>
           <p className="text-xs text-amber-500 mt-2">Built with love • Data stored locally on your device</p>
           <p className="text-xs text-amber-400 mt-1">No accounts, no tracking, just you and Romo 💛</p>
