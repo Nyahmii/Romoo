@@ -33,7 +33,10 @@ export default function Layout({ children, currentPage, setCurrentPage, profileN
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-teal-50">
       <UpdateBanner />
-      <header className="bg-white/80 backdrop-blur-md border-b border-amber-100 sticky top-0 z-50">
+      <header
+        style={{ top: 'var(--romo-safe-top)' }}
+        className="bg-white/80 backdrop-blur-md border-b border-amber-100 sticky z-50"
+      >
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🦦</span>
